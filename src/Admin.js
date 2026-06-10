@@ -2,6 +2,18 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase";
 
 const ADMIN_PASS = "admin123";
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function getISTTime() {
+  const now = new Date();
+  return new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+}
+
+function shouldAutoReset() {
+  const ist = getISTTime();
+  const h = ist.getHours();
+  return h >= 5 && h < 6;
+}
 
 const css = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -48,7 +60,9 @@ export default function Admin() {
   const [chartPage, setChartPage] = useState(1);
   const [editIdx, setEditIdx] = useState(null);
   const [editVal, setEditVal] = useState("");
+  const [autoReset, setAutoReset] = useState(false);
   const initialized = useRef(false);
+  const resetDone = useRef(false);
   const ROWS_PER_PAGE = 50;
 
   useEffect(() => {
@@ -57,6 +71,42 @@ export default function Admin() {
     initialized.current = true;
     loadData();
   }, [loggedIn]);
+
+  // Auto reset at 5 AM IST
+  useEffect(() => {
+    if (!loggedIn) return;
+    const t = setInterval(async () => {
+      if (shouldAutoReset() && !resetDone.current) {
+        resetDone.current = true;
+        await autoResetResult();
+      } else if (!shouldAutoReset()) {
+        resetDone.current = false;
+      }
+    }, 60000);
+    return () => clearInterval(t);
+  }, [loggedIn]);
+
+  async function autoResetResult() {
+    try {
+      const { data: rData } = await supabase.from("results").select("*").eq("id", 1).single();
+      if (rData && rData.result1 !== "--") {
+        const ist = getISTTime();
+        const yesterday = new Date(ist);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const day = yesterday.getDate();
+        const month = MONTHS[yesterday.getMonth()];
+        const year = yesterday.getFullYear();
+        await supabase.from("chart")
+          .update({ result1: Number(rData.result1) })
+          .eq("year", year).eq("month", month).eq("day", day);
+        await supabase.from("results").upsert({ id: 1, result1: "--", updated_at: new Date().toISOString() });
+        setResult1("--");
+        setAutoReset(true);
+        setTimeout(() => setAutoReset(false), 5000);
+        await loadChartPage(1);
+      }
+    } catch (e) { console.error(e); }
+  }
 
   async function loadData() {
     try {
@@ -121,27 +171,38 @@ export default function Admin() {
     <div style={{ background: "#080808", minHeight: "100vh", color: "#e8dfc0" }}>
       <style>{css}</style>
       <div style={{ background: "#0d0d0d", borderBottom: "1px solid #8a6820", padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-        <div className="pf gold-grad" style={{ fontSize: "1.3rem", fontWeight: 900 }}>⚙ Admin Panel</div>
+        <div className="pf gold-grad" style={{ fontSize: "1.3rem", fontWeight: 900 }}>⚙ Admin Panel — Dubai King</div>
         <div style={{ display: "flex", gap: 8 }}>
           <button className="btn-gold" onClick={() => window.location.href = "/"}>🌐 Website</button>
           <button className="btn-red" onClick={() => setLoggedIn(false)}>Logout</button>
         </div>
       </div>
+
+      {autoReset && (
+        <div style={{ background: "#1a3a1a", border: "1px solid #4caf50", margin: 16, padding: 12, borderRadius: 4, textAlign: "center", color: "#4caf50", fontSize: "0.85rem" }}>
+          ✓ 5 AM auto-reset ho gaya — result chart mein save ho gaya!
+        </div>
+      )}
+
       <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 16px" }}>
         <div style={{ background: "#0d0d0d", border: "1px solid #8a6820", borderRadius: 4, padding: 24, marginBottom: 20 }}>
           <div className="pf" style={{ color: "#c9a84c", fontSize: "1.1rem", fontWeight: 700, marginBottom: 4 }}>◆ Live Result Update</div>
-          <div style={{ color: "#6a6040", fontSize: "0.72rem", marginBottom: 20 }}>Current: <strong style={{ color: "#f0d080" }}>{result1}</strong></div>
+          <div style={{ color: "#6a6040", fontSize: "0.72rem", marginBottom: 20 }}>
+            Current: <strong style={{ color: "#f0d080" }}>{result1}</strong>
+            <span style={{ marginLeft: 16, color: "#6a6040" }}>— 5:00 AM IST pe auto chart mein save hoga</span>
+          </div>
           <div style={{ marginBottom: 14 }}>
-            <label style={{ color: "#6a6040", fontSize: "0.7rem", letterSpacing: "0.15em", display: "block", marginBottom: 6 }}>NAYA RESULT (1-100)</label>
+            <label style={{ color: "#6a6040", fontSize: "0.7rem", letterSpacing: "0.15em", display: "block", marginBottom: 6 }}>AAJ KA RESULT DALEIN (1-100)</label>
             <input className="admin-input" type="number" min="1" max="100" placeholder="Number dalein..."
               value={adminR1} onChange={e => setAdminR1(e.target.value)}
               onKeyDown={e => e.key === "Enter" && saveResult()} />
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <button className="btn-gold" onClick={saveResult}>💾 Save & Publish</button>
-            {saved && <span style={{ color: "#4caf50", fontSize: "0.8rem" }}>✓ Update ho gaya!</span>}
+            {saved && <span style={{ color: "#4caf50", fontSize: "0.8rem" }}>✓ Result live ho gaya!</span>}
           </div>
         </div>
+
         <div style={{ background: "#0d0d0d", border: "1px solid #8a6820", borderRadius: 4, padding: 24 }}>
           <div className="pf" style={{ color: "#c9a84c", fontSize: "1.1rem", fontWeight: 700, marginBottom: 16 }}>◆ Chart Edit</div>
           <div style={{ overflowX: "auto" }}>
