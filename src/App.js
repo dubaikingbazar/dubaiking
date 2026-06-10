@@ -36,7 +36,6 @@ export default function App() {
   const [result1, setResult1] = useState("--");
   const [chart, setChart] = useState([]);
   const [chartPage, setChartPage] = useState(1);
-  const [now, setNow] = useState(new Date());
   const [showResult, setShowResult] = useState(false);
   const [loading, setLoading] = useState(true);
   const initialized = useRef(false);
@@ -78,21 +77,30 @@ export default function App() {
     setChartPage(p);
   }
 
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel("results-changes")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "results"
+      }, (payload) => {
+        if (payload.new && payload.new.result1) {
+          setResult1(payload.new.result1);
+        }
+      })
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, []);
+
+  // Clock
   useEffect(() => {
     const t = setInterval(() => {
-      setNow(new Date());
       setShowResult(isResultTime());
     }, 1000);
     setShowResult(isResultTime());
-
-    const r = setInterval(async () => {
-      try {
-        const { data } = await supabase.from("results").select("*").eq("id", 1).single();
-        if (data) setResult1(data.result1);
-      } catch(e) {}
-    }, 5000);
-
-    return () => { clearInterval(t); clearInterval(r); };
+    return () => clearInterval(t);
   }, []);
 
   const ist = getISTTime();
