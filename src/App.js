@@ -77,8 +77,8 @@ export default function App() {
     setChartPage(p);
   }
 
-  // Realtime subscription
   useEffect(() => {
+    // Realtime subscription
     const channel = supabase
       .channel("results-changes")
       .on("postgres_changes", {
@@ -86,21 +86,31 @@ export default function App() {
         schema: "public",
         table: "results"
       }, (payload) => {
-        if (payload.new && payload.new.result1) {
+        if (payload.new && payload.new.result1 !== undefined) {
           setResult1(payload.new.result1);
         }
       })
       .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, []);
 
-  // Clock
-  useEffect(() => {
+    // Clock
     const t = setInterval(() => {
       setShowResult(isResultTime());
     }, 1000);
     setShowResult(isResultTime());
-    return () => clearInterval(t);
+
+    // Backup polling har 3 second
+    const r = setInterval(async () => {
+      try {
+        const { data } = await supabase.from("results").select("*").eq("id", 1).single();
+        if (data) setResult1(data.result1);
+      } catch(e) {}
+    }, 3000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(t);
+      clearInterval(r);
+    };
   }, []);
 
   const ist = getISTTime();
