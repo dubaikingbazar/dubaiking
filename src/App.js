@@ -9,6 +9,7 @@ function getISTTime() {
 
 export default function App() {
   const [result1, setResult1] = useState("--");
+  const [result2, setResult2] = useState("WAIT");
   const [chartData, setChartData] = useState({});
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(getISTTime());
@@ -26,7 +27,10 @@ export default function App() {
     setLoading(true);
     try {
       const { data: rData } = await supabase.from("results").select("*").eq("id", 1).single();
-      if (rData) setResult1(rData.result1);
+      if (rData) {
+        setResult1(rData.result1);
+        setResult2(rData.result2 || "WAIT");
+      }
       await loadChart();
     } catch(e) { console.error(e); }
     setLoading(false);
@@ -50,12 +54,18 @@ export default function App() {
   useEffect(() => {
     const channel = supabase.channel("results-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "results" }, (payload) => {
-        if (payload.new && payload.new.result1 !== undefined) setResult1(payload.new.result1);
+        if (payload.new) {
+          if (payload.new.result1 !== undefined) setResult1(payload.new.result1);
+          if (payload.new.result2 !== undefined) setResult2(payload.new.result2 || "WAIT");
+        }
       }).subscribe();
     const r = setInterval(async () => {
       try {
         const { data } = await supabase.from("results").select("*").eq("id", 1).single();
-        if (data) setResult1(data.result1);
+        if (data) {
+          setResult1(data.result1);
+          setResult2(data.result2 || "WAIT");
+        }
       } catch(e) {}
     }, 3000);
     const t = setInterval(() => setNow(getISTTime()), 1000);
@@ -82,6 +92,8 @@ export default function App() {
   const years = [];
   for (let y = 2026; y >= 2016; y--) years.push(y);
 
+  const isWait = result2 === "WAIT" || result2 === "--" || !result2;
+
   return (
     <div style={{background:"#070707",minHeight:"100vh",color:"#e8dfc0",fontFamily:"Georgia,serif"}}>
       <style>{`
@@ -89,88 +101,98 @@ export default function App() {
         *{box-sizing:border-box;margin:0;padding:0}
         .cin{font-family:'Cinzel',serif}
         .cor{font-family:'Cormorant Garamond',serif}
-        .gold{color:#c9a84c}
         .gold-grad{background:linear-gradient(180deg,#f5e070,#c9a84c,#8a6820);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-        .gold-line{height:1px;background:linear-gradient(90deg,transparent,#c9a84c,transparent);margin:8px 0}
-        .glow{text-shadow:0 0 30px rgba(201,168,76,0.5),0 0 60px rgba(201,168,76,0.3)}
+        .pulse{animation:pulse 1.4s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
         ::-webkit-scrollbar{width:5px}
         ::-webkit-scrollbar-track{background:#111}
         ::-webkit-scrollbar-thumb{background:#8a6820}
         select{background:#0d0d0d;color:#c9a84c;border:1px solid #8a6820;padding:8px 12px;font-family:'Cinzel',serif;font-size:0.75rem;border-radius:2px;outline:none;cursor:pointer}
       `}</style>
 
-      {/* Top Gold Bar */}
       <div style={{background:"linear-gradient(90deg,#8a6820,#f5e070,#c9a84c,#f5e070,#8a6820)",height:3}} />
 
-      {/* Nav */}
       <nav style={{background:"#0a0a0a",borderBottom:"1px solid #2a2010",padding:"16px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
         <div style={{display:"flex",gap:4}}>
           {["HOME","CHART","CONTACT"].map(l => (
-            <a key={l} href="#" className="cin" style={{color:"#c9a84c",padding:"8px 18px",textDecoration:"none",fontWeight:700,fontSize:"0.65rem",letterSpacing:"0.25em",border:"1px solid #2a2010",transition:"all 0.2s"}}
-              onMouseOver={e=>e.target.style.borderColor="#c9a84c"}
-              onMouseOut={e=>e.target.style.borderColor="#2a2010"}>{l}</a>
+            <a key={l} href="#" className="cin" style={{color:"#c9a84c",padding:"8px 18px",textDecoration:"none",fontWeight:700,fontSize:"0.65rem",letterSpacing:"0.25em",border:"1px solid #2a2010"}}>{l}</a>
           ))}
         </div>
         <div className="cin" style={{color:"#8a6820",fontSize:"0.6rem",letterSpacing:"0.3em"}}>◆ OFFICIAL PLATFORM ◆</div>
       </nav>
 
-      {/* Hero Banner */}
-      <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",padding:"50px 16px 40px",textAlign:"center",position:"relative",borderBottom:"1px solid #1a1408"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:"100%",backgroundImage:"radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.08) 0%,transparent 70%)",pointerEvents:"none"}} />
-        <div className="cin" style={{color:"#8a6820",fontSize:"0.65rem",letterSpacing:"0.5em",marginBottom:12}}>◆ ◆ ◆</div>
-        <div className="cin gold-grad glow" style={{fontSize:"clamp(1.6rem,5vw,3rem)",fontWeight:900,letterSpacing:"0.1em",lineHeight:1.2}}>
-          DUBAI KING
-        </div>
-        <div className="cin gold-grad" style={{fontSize:"clamp(1rem,3vw,1.6rem)",fontWeight:400,letterSpacing:"0.2em",marginTop:4}}>
-          RESULT & CHART 2026
-        </div>
-        <div style={{width:200,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"16px auto"}} />
-        <div className="cor" style={{color:"#8a6820",fontSize:"0.85rem",letterSpacing:"0.2em",fontStyle:"italic"}}>
-          Premium Result Platform
+      <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",padding:"50px 16px 40px",textAlign:"center",borderBottom:"1px solid #1a1408"}}>
+        <div style={{position:"relative"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:"100%",backgroundImage:"radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.08) 0%,transparent 70%)",pointerEvents:"none"}} />
+          <div className="cin" style={{color:"#8a6820",fontSize:"0.65rem",letterSpacing:"0.5em",marginBottom:12}}>◆ ◆ ◆</div>
+          <div className="cin gold-grad" style={{fontSize:"clamp(1.6rem,5vw,3rem)",fontWeight:900,letterSpacing:"0.1em",lineHeight:1.2,textShadow:"none",filter:"drop-shadow(0 0 20px rgba(201,168,76,0.3))"}}>
+            DUBAI KING
+          </div>
+          <div className="cin gold-grad" style={{fontSize:"clamp(1rem,3vw,1.6rem)",fontWeight:400,letterSpacing:"0.2em",marginTop:4}}>
+            RESULT & CHART 2026
+          </div>
+          <div style={{width:200,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"16px auto"}} />
+          <div className="cor" style={{color:"#8a6820",fontSize:"0.85rem",letterSpacing:"0.2em",fontStyle:"italic"}}>
+            Premium Result Platform
+          </div>
         </div>
       </div>
 
-      {/* DateTime */}
       <div style={{background:"#0a0a0a",borderBottom:"1px solid #1a1408",padding:"12px",textAlign:"center"}}>
         <span className="cin" style={{color:"#c9a84c",fontSize:"0.75rem",letterSpacing:"0.15em"}}>
           {dateStr} &nbsp;◆&nbsp; {timeStr} (IST)
         </span>
       </div>
 
-      {/* Result Card */}
-      <div style={{maxWidth:600,margin:"40px auto",padding:"0 16px"}}>
-        <div style={{background:"linear-gradient(145deg,#0d0b06,#111008)",border:"1px solid #2a2010",borderRadius:4,padding:"40px 20px",textAlign:"center",position:"relative",boxShadow:"0 0 60px rgba(201,168,76,0.06)"}}>
-          {/* Corner decorations */}
-          <div style={{position:"absolute",top:10,left:14,color:"#8a6820",fontSize:"1rem"}}>◆</div>
-          <div style={{position:"absolute",top:10,right:14,color:"#8a6820",fontSize:"1rem"}}>◆</div>
-          <div style={{position:"absolute",bottom:10,left:14,color:"#8a6820",fontSize:"1rem"}}>◆</div>
-          <div style={{position:"absolute",bottom:10,right:14,color:"#8a6820",fontSize:"1rem"}}>◆</div>
-
-          <div className="cin" style={{color:"#8a6820",fontSize:"0.6rem",letterSpacing:"0.5em",marginBottom:8}}>TODAY'S RESULT</div>
-          <div className="cin" style={{color:"#c0392b",fontSize:"1.4rem",fontWeight:900,letterSpacing:"0.3em",marginBottom:12,textShadow:"0 0 20px rgba(192,57,43,0.4)"}}>
-            DUBAI KING
-          </div>
-          <div style={{width:80,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"0 auto 16px"}} />
-          <div className="cin gold-grad" style={{fontSize:"clamp(4rem,15vw,7rem)",fontWeight:900,lineHeight:1,filter:"drop-shadow(0 0 20px rgba(201,168,76,0.4))"}}>
+      {/* 2 Result Cards */}
+      <div style={{maxWidth:700,margin:"40px auto",padding:"0 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+        
+        {/* Card 1 - Aaj Ka Result */}
+        <div style={{background:"linear-gradient(145deg,#0d0b06,#111008)",border:"1px solid #2a2010",borderRadius:4,padding:"30px 16px",textAlign:"center",position:"relative",boxShadow:"0 0 60px rgba(201,168,76,0.06)"}}>
+          <div style={{position:"absolute",top:8,left:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
+          <div style={{position:"absolute",top:8,right:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
+          <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.4em",marginBottom:6}}>PREVIOUS</div>
+          <div className="cin" style={{color:"#c0392b",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:4}}>DUBAI KING</div>
+          <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>07:30 PM</div>
+          <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"0 auto 12px"}} />
+          <div className="cin gold-grad" style={{fontSize:"clamp(3rem,10vw,5rem)",fontWeight:900,lineHeight:1,filter:"drop-shadow(0 0 15px rgba(201,168,76,0.4))"}}>
             {loading ? "..." : result1}
           </div>
-          <div style={{width:80,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"16px auto 0"}} />
+          <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"12px auto 0"}} />
+        </div>
+
+        {/* Card 2 - Agle Din Ka Result */}
+        <div style={{background:"linear-gradient(145deg,#0d0b06,#111008)",border:"1px solid #2a2010",borderRadius:4,padding:"30px 16px",textAlign:"center",position:"relative",boxShadow:"0 0 60px rgba(201,168,76,0.06)"}}>
+          <div style={{position:"absolute",top:8,left:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
+          <div style={{position:"absolute",top:8,right:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
+          <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.4em",marginBottom:6}}>NEXT</div>
+          <div className="cin" style={{color:"#c0392b",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:4}}>DUBAI KING</div>
+          <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>07:30 PM</div>
+          <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"0 auto 12px"}} />
+          {isWait ? (
+            <div>
+              <div className="cin pulse" style={{fontSize:"1.8rem",fontWeight:900,color:"#c0392b",letterSpacing:"0.3em"}}>WAIT</div>
+              <div className="cin" style={{color:"#8a6820",fontSize:"0.5rem",letterSpacing:"0.15em",marginTop:8}}>RESULT AANE WALA HAI</div>
+            </div>
+          ) : (
+            <div className="cin gold-grad" style={{fontSize:"clamp(3rem,10vw,5rem)",fontWeight:900,lineHeight:1,filter:"drop-shadow(0 0 15px rgba(201,168,76,0.4))"}}>
+              {result2}
+            </div>
+          )}
+          <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"12px auto 0"}} />
         </div>
       </div>
 
-      {/* Notice */}
-      <div style={{maxWidth:600,margin:"0 auto 32px",padding:"0 16px"}}>
-        <div className="cor" style={{border:"1px solid #1a1408",padding:"14px 20px",textAlign:"center",fontSize:"0.9rem",color:"#8a6820",fontStyle:"italic",letterSpacing:"0.05em",background:"#0a0a0a"}}>
-          ❝ Har roz ka result yahan update hota hai — Dubai King Official Platform ❞
+      <div style={{maxWidth:700,margin:"0 auto 32px",padding:"0 16px"}}>
+        <div className="cor" style={{border:"1px solid #1a1408",padding:"14px 20px",textAlign:"center",fontSize:"0.9rem",color:"#8a6820",fontStyle:"italic",background:"#0a0a0a"}}>
+          ❝ Har roz ka result 7:30 PM pe update hota hai — Dubai King Official Platform ❞
         </div>
       </div>
 
-      {/* Chart Header */}
+      {/* Chart */}
       <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",borderTop:"1px solid #2a2010",borderBottom:"1px solid #2a2010",padding:"16px",textAlign:"center"}}>
         <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.5em",marginBottom:4}}>◆ ◆ ◆</div>
-        <div className="cin gold-grad" style={{fontSize:"1rem",fontWeight:700,letterSpacing:"0.3em"}}>
-          DUBAI KING MONTHLY CHART
-        </div>
+        <div className="cin gold-grad" style={{fontSize:"1rem",fontWeight:700,letterSpacing:"0.3em"}}>DUBAI KING MONTHLY CHART</div>
         <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.5em",marginTop:4}}>2016 — 2026</div>
       </div>
 
@@ -180,10 +202,7 @@ export default function App() {
         </div>
       ) : (
         <div style={{maxWidth:500,margin:"0 auto",padding:"24px 16px"}}>
-
-          {/* Chart Table */}
-          <div style={{border:"1px solid #2a2010",borderRadius:4,overflow:"hidden",boxShadow:"0 0 40px rgba(201,168,76,0.04)"}}>
-            {/* Month Title */}
+          <div style={{border:"1px solid #2a2010",borderRadius:4,overflow:"hidden"}}>
             <div style={{background:"linear-gradient(135deg,#1a1408,#2a2010,#1a1408)",borderBottom:"1px solid #2a2010",padding:"14px",textAlign:"center",position:"relative"}}>
               <div style={{position:"absolute",top:"50%",left:14,transform:"translateY(-50%)",color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
               <div style={{position:"absolute",top:"50%",right:14,transform:"translateY(-50%)",color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
@@ -191,14 +210,10 @@ export default function App() {
                 {MONTHS[selMonth-1].toUpperCase()} {selYear}
               </div>
             </div>
-
-            {/* Table Header */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",background:"#0d0b06",borderBottom:"1px solid #2a2010"}}>
               <div className="cin" style={{color:"#c0392b",padding:"10px",textAlign:"center",fontSize:"0.65rem",letterSpacing:"0.2em",borderRight:"1px solid #2a2010"}}>DATE</div>
               <div className="cin" style={{color:"#c9a84c",padding:"10px",textAlign:"center",fontSize:"0.65rem",letterSpacing:"0.2em"}}>DUBAI KING</div>
             </div>
-
-            {/* Table Rows */}
             {Array.from({length: new Date(selYear, selMonth, 0).getDate()}, (_, i) => i+1).map(day => (
               <div key={day} style={{display:"grid",gridTemplateColumns:"1fr 1fr",background:day%2===0?"#0a0a0a":"#070707",borderBottom:"1px solid #111008"}}>
                 <div className="cin" style={{color:"#c0392b",padding:"10px",textAlign:"center",fontSize:"0.85rem",fontWeight:700,borderRight:"1px solid #111008"}}>
@@ -211,21 +226,17 @@ export default function App() {
             ))}
           </div>
 
-          {/* Prev / Next */}
           <div style={{display:"flex",justifyContent:"space-between",gap:8,marginTop:16}}>
-            <button disabled={isOldest} onClick={prevMonth}
-              className="cin"
+            <button disabled={isOldest} onClick={prevMonth} className="cin"
               style={{flex:1,background:isOldest?"#0a0a0a":"linear-gradient(135deg,#1a1408,#2a2010)",color:isOldest?"#2a2a2a":"#c9a84c",border:"1px solid",borderColor:isOldest?"#1a1a1a":"#2a2010",padding:"12px",fontSize:"0.65rem",letterSpacing:"0.15em",cursor:isOldest?"not-allowed":"pointer",borderRadius:2}}>
               ◀ {selMonth===1?`DEC ${selYear-1}`:`${MONTHS[selMonth-2].substring(0,3).toUpperCase()} ${selYear}`}
             </button>
-            <button disabled={isLatest} onClick={nextMonth}
-              className="cin"
+            <button disabled={isLatest} onClick={nextMonth} className="cin"
               style={{flex:1,background:isLatest?"#0a0a0a":"linear-gradient(135deg,#1a1408,#2a2010)",color:isLatest?"#2a2a2a":"#c9a84c",border:"1px solid",borderColor:isLatest?"#1a1a1a":"#2a2010",padding:"12px",fontSize:"0.65rem",letterSpacing:"0.15em",cursor:isLatest?"not-allowed":"pointer",borderRadius:2}}>
               {selMonth===12?`JAN ${selYear+1}`:`${MONTHS[selMonth].substring(0,3).toUpperCase()} ${selYear}`} ▶
             </button>
           </div>
 
-          {/* Dropdown */}
           <div style={{marginTop:16,background:"linear-gradient(135deg,#0d0b06,#111008)",border:"1px solid #2a2010",borderRadius:4,padding:"16px",textAlign:"center"}}>
             <div className="cin" style={{color:"#8a6820",fontSize:"0.6rem",letterSpacing:"0.3em",marginBottom:12}}>◆ SELECT MONTH & YEAR ◆</div>
             <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
@@ -237,13 +248,10 @@ export default function App() {
               </select>
             </div>
           </div>
-
         </div>
       )}
 
-      {/* Bottom Gold Bar */}
       <div style={{background:"linear-gradient(90deg,#8a6820,#f5e070,#c9a84c,#f5e070,#8a6820)",height:3,marginTop:40}} />
-
       <footer style={{textAlign:"center",padding:"20px",background:"#0a0a0a"}}>
         <div className="cin" style={{color:"#2a2010",fontSize:"0.6rem",letterSpacing:"0.3em"}}>
           © 2026 DUBAI KING RESULT — ALL RIGHTS RESERVED
