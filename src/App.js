@@ -26,10 +26,8 @@ function getISTTime() {
 }
 
 function isResultTime() {
-  const ist = getISTTime();
-  const h = ist.getHours();
-  const m = ist.getMinutes();
-  return (h > 19) || (h === 19 && m >= 30);
+  return true;
+}
 }
 
 export default function App() {
