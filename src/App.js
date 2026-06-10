@@ -27,10 +27,7 @@ export default function App() {
     setLoading(true);
     try {
       const { data: rData } = await supabase.from("results").select("*").eq("id", 1).single();
-      if (rData) {
-        setResult1(rData.result1);
-        setResult2(rData.result2 || "WAIT");
-      }
+      if (rData) { setResult1(rData.result1); setResult2(rData.result2 || "WAIT"); }
       await loadChart();
     } catch(e) { console.error(e); }
     setLoading(false);
@@ -62,19 +59,25 @@ export default function App() {
     const r = setInterval(async () => {
       try {
         const { data } = await supabase.from("results").select("*").eq("id", 1).single();
-        if (data) {
-          setResult1(data.result1);
-          setResult2(data.result2 || "WAIT");
-        }
+        if (data) { setResult1(data.result1); setResult2(data.result2 || "WAIT"); }
       } catch(e) {}
     }, 3000);
     const t = setInterval(() => setNow(getISTTime()), 1000);
     return () => { supabase.removeChannel(channel); clearInterval(r); clearInterval(t); };
   }, []);
 
+  const ist = getISTTime();
   const dateStr = now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
   const selected = chartData[`${selYear}-${selMonth}`];
+
+  // Card dates
+  const todayDay = ist.getDate();
+  const todayMonth = MONTHS[ist.getMonth()].substring(0,3).toUpperCase();
+  const yesterdayDate = new Date(ist);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayDay = yesterdayDate.getDate();
+  const yesterdayMonth = MONTHS[yesterdayDate.getMonth()].substring(0,3).toUpperCase();
 
   function prevMonth() {
     if (selMonth === 1) { if (selYear > 2016) { setSelMonth(12); setSelYear(y => y-1); } }
@@ -86,12 +89,10 @@ export default function App() {
     if (selMonth === 12) { setSelMonth(1); setSelYear(y => y+1); }
     else setSelMonth(m => m+1);
   }
-  const ist = getISTTime();
   const isLatest = selYear === ist.getFullYear() && selMonth === ist.getMonth()+1;
   const isOldest = selYear === 2016 && selMonth === 1;
   const years = [];
   for (let y = 2026; y >= 2016; y--) years.push(y);
-
   const isWait = result2 === "WAIT" || result2 === "--" || !result2;
 
   return (
@@ -122,20 +123,16 @@ export default function App() {
       </nav>
 
       <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",padding:"50px 16px 40px",textAlign:"center",borderBottom:"1px solid #1a1408"}}>
-        <div style={{position:"relative"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:"100%",backgroundImage:"radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.08) 0%,transparent 70%)",pointerEvents:"none"}} />
-          <div className="cin" style={{color:"#8a6820",fontSize:"0.65rem",letterSpacing:"0.5em",marginBottom:12}}>◆ ◆ ◆</div>
-          <div className="cin gold-grad" style={{fontSize:"clamp(1.6rem,5vw,3rem)",fontWeight:900,letterSpacing:"0.1em",lineHeight:1.2,textShadow:"none",filter:"drop-shadow(0 0 20px rgba(201,168,76,0.3))"}}>
-            DUBAI KING
-          </div>
-          <div className="cin gold-grad" style={{fontSize:"clamp(1rem,3vw,1.6rem)",fontWeight:400,letterSpacing:"0.2em",marginTop:4}}>
-            RESULT & CHART 2026
-          </div>
-          <div style={{width:200,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"16px auto"}} />
-          <div className="cor" style={{color:"#8a6820",fontSize:"0.85rem",letterSpacing:"0.2em",fontStyle:"italic"}}>
-            Premium Result Platform
-          </div>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:"100%",backgroundImage:"radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.08) 0%,transparent 70%)",pointerEvents:"none"}} />
+        <div className="cin" style={{color:"#8a6820",fontSize:"0.65rem",letterSpacing:"0.5em",marginBottom:12}}>◆ ◆ ◆</div>
+        <div className="cin gold-grad" style={{fontSize:"clamp(1.6rem,5vw,3rem)",fontWeight:900,letterSpacing:"0.1em",lineHeight:1.2,filter:"drop-shadow(0 0 20px rgba(201,168,76,0.3))"}}>
+          DUBAI KING
         </div>
+        <div className="cin gold-grad" style={{fontSize:"clamp(1rem,3vw,1.6rem)",fontWeight:400,letterSpacing:"0.2em",marginTop:4}}>
+          RESULT & CHART 2026
+        </div>
+        <div style={{width:200,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"16px auto"}} />
+        <div className="cor" style={{color:"#8a6820",fontSize:"0.85rem",letterSpacing:"0.2em",fontStyle:"italic"}}>Premium Result Platform</div>
       </div>
 
       <div style={{background:"#0a0a0a",borderBottom:"1px solid #1a1408",padding:"12px",textAlign:"center"}}>
@@ -144,16 +141,18 @@ export default function App() {
         </span>
       </div>
 
-      {/* 2 Result Cards */}
+      {/* 2 Cards */}
       <div style={{maxWidth:700,margin:"40px auto",padding:"0 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-        
-        {/* Card 1 - Aaj Ka Result */}
+
+        {/* Card 1 - Kal Ka Result */}
         <div style={{background:"linear-gradient(145deg,#0d0b06,#111008)",border:"1px solid #2a2010",borderRadius:4,padding:"30px 16px",textAlign:"center",position:"relative",boxShadow:"0 0 60px rgba(201,168,76,0.06)"}}>
           <div style={{position:"absolute",top:8,left:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
           <div style={{position:"absolute",top:8,right:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
-          <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.4em",marginBottom:6}}>PREVIOUS</div>
-          <div className="cin" style={{color:"#c0392b",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:4}}>DUBAI KING</div>
-          <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>07:30 PM</div>
+          <div className="cin" style={{color:"#8a6820",fontSize:"0.6rem",letterSpacing:"0.3em",marginBottom:4}}>
+            {yesterdayDay} {yesterdayMonth}
+          </div>
+          <div className="cin" style={{color:"#c0392b",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:2}}>DUBAI KING</div>
+          <div className="cin" style={{color:"#6a6040",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>07:30 PM</div>
           <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"0 auto 12px"}} />
           <div className="cin gold-grad" style={{fontSize:"clamp(3rem,10vw,5rem)",fontWeight:900,lineHeight:1,filter:"drop-shadow(0 0 15px rgba(201,168,76,0.4))"}}>
             {loading ? "..." : result1}
@@ -161,18 +160,20 @@ export default function App() {
           <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"12px auto 0"}} />
         </div>
 
-        {/* Card 2 - Agle Din Ka Result */}
+        {/* Card 2 - Aaj Ka Result */}
         <div style={{background:"linear-gradient(145deg,#0d0b06,#111008)",border:"1px solid #2a2010",borderRadius:4,padding:"30px 16px",textAlign:"center",position:"relative",boxShadow:"0 0 60px rgba(201,168,76,0.06)"}}>
           <div style={{position:"absolute",top:8,left:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
           <div style={{position:"absolute",top:8,right:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
-          <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.4em",marginBottom:6}}>NEXT</div>
-          <div className="cin" style={{color:"#c0392b",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:4}}>DUBAI KING</div>
-          <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>07:30 PM</div>
+          <div className="cin" style={{color:"#8a6820",fontSize:"0.6rem",letterSpacing:"0.3em",marginBottom:4}}>
+            {todayDay} {todayMonth}
+          </div>
+          <div className="cin" style={{color:"#c0392b",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:2}}>DUBAI KING</div>
+          <div className="cin" style={{color:"#6a6040",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>07:30 PM</div>
           <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"0 auto 12px"}} />
           {isWait ? (
             <div>
               <div className="cin pulse" style={{fontSize:"1.8rem",fontWeight:900,color:"#c0392b",letterSpacing:"0.3em"}}>WAIT</div>
-              <div className="cin" style={{color:"#8a6820",fontSize:"0.5rem",letterSpacing:"0.15em",marginTop:8}}>RESULT AANE WALA HAI</div>
+              <div className="cin" style={{color:"#6a6040",fontSize:"0.5rem",letterSpacing:"0.15em",marginTop:8}}>RESULT AANE WALA HAI</div>
             </div>
           ) : (
             <div className="cin gold-grad" style={{fontSize:"clamp(3rem,10vw,5rem)",fontWeight:900,lineHeight:1,filter:"drop-shadow(0 0 15px rgba(201,168,76,0.4))"}}>
