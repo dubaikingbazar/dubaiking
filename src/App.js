@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const MONTHS_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 function randomNum() { return Math.floor(Math.random() * 100) + 1; }
 function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
 
@@ -59,6 +60,13 @@ const css = `
     border-radius: 2px; transition: opacity 0.2s;
   }
   .btn-gold:hover { opacity: 0.85; }
+  .btn-nav {
+    background: #1a3a8a; color: #fff; border: none; padding: 10px 28px;
+    font-family: 'Playfair Display', serif; font-weight: 700;
+    font-size: 0.82rem; letter-spacing: 0.1em; cursor: pointer;
+    border-radius: 2px; transition: opacity 0.2s; min-width: 110px;
+  }
+  .btn-nav:hover { opacity: 0.85; }
   .btn-red {
     background: linear-gradient(135deg, #8b0000, #c0392b);
     color: #fff; border: none; padding: 8px 18px;
@@ -67,6 +75,56 @@ const css = `
     border-radius: 2px; transition: opacity 0.2s;
   }
   .btn-red:hover { opacity: 0.8; }
+  .month-header {
+    background: #16a085;
+    color: #fff;
+    text-align: center;
+    padding: 12px;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.1em;
+  }
+  .chart-th-date {
+    background: #e6ac00;
+    color: #c0392b;
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-align: center;
+    padding: 10px 8px;
+  }
+  .chart-th-result {
+    background: #e6ac00;
+    color: #000;
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-align: center;
+    padding: 10px 8px;
+  }
+  .chart-td-date {
+    color: #c0392b;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1rem;
+    text-align: center;
+    padding: 9px 8px;
+    border-bottom: 1px solid #222;
+  }
+  .chart-td-result {
+    color: #111;
+    font-family: 'Libre Baskerville', serif;
+    font-weight: 700;
+    font-size: 1rem;
+    text-align: center;
+    padding: 9px 8px;
+    border-bottom: 1px solid #ddd;
+  }
+  .chart-tr-even { background: #fff; }
+  .chart-tr-odd { background: #f5f5f5; }
 `;
 
 // ── ADMIN PAGE ──────────────────────────────────────
@@ -206,16 +264,68 @@ function AdminPage() {
   );
 }
 
+// ── MONTHLY CHART COMPONENT ─────────────────────────
+function MonthlyChart({ allData, viewYear, viewMonth, onPrev, onNext, hasPrev, hasNext, prevLabel, nextLabel }) {
+  const daysCount = daysInMonth(viewYear, viewMonth + 1);
+  const dataMap = {};
+  allData.forEach(row => {
+    if (row.year === viewYear && row.month === MONTHS[viewMonth]) {
+      dataMap[row.day] = row.result1;
+    }
+  });
+
+  return (
+    <div style={{ maxWidth: 480, margin: "0 auto", padding: "0 8px 16px" }}>
+      {/* Month header */}
+      <div className="month-header">
+        Monthly Dubai King Result Chart of {MONTHS_FULL[viewMonth]} {viewYear}
+      </div>
+
+      {/* Table */}
+      <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff" }}>
+        <thead>
+          <tr>
+            <th className="chart-th-date" style={{ width: "50%" }}>DATE</th>
+            <th className="chart-th-result" style={{ width: "50%" }}>DUBAI KING</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: daysCount }, (_, i) => {
+            const day = i + 1;
+            const result = dataMap[day];
+            const isEven = i % 2 === 0;
+            return (
+              <tr key={day} className={isEven ? "chart-tr-even" : "chart-tr-odd"}>
+                <td className="chart-td-date">{String(day).padStart(2, "0")}</td>
+                <td className="chart-td-result">{result !== undefined ? String(result).padStart(2, "0") : "XX"}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      {/* Navigation */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, gap: 8 }}>
+        {hasPrev
+          ? <button className="btn-nav" onClick={onPrev}>← {prevLabel}</button>
+          : <div />}
+        {hasNext
+          ? <button className="btn-nav" style={{ marginLeft: "auto" }} onClick={onNext}>{nextLabel} →</button>
+          : <div />}
+      </div>
+    </div>
+  );
+}
+
 // ── MAIN WEBSITE ────────────────────────────────────
 function MainPage() {
   const [result1, setResult1] = useState("--");
-  const [chart, setChart] = useState([]);
-  const [chartPage, setChartPage] = useState(1);
-  const [totalRows, setTotalRows] = useState(0);
+  const [allChartData, setAllChartData] = useState([]);
   const [now, setNow] = useState(new Date());
   const [loading, setLoading] = useState(true);
+  const [viewYear, setViewYear] = useState(new Date().getFullYear());
+  const [viewMonth, setViewMonth] = useState(new Date().getMonth());
   const initialized = useRef(false);
-  const ROWS_PER_PAGE = 50;
 
   useEffect(() => {
     if (initialized.current) return;
@@ -228,29 +338,30 @@ function MainPage() {
     try {
       const { data: rData } = await supabase.from("results").select("*").eq("key", "today").single();
       if (rData) setResult1(rData.value);
+
       const { count } = await supabase.from("chart").select("*", { count: "exact", head: true });
-      setTotalRows(count || 0);
       if (!count || count === 0) {
         const rows = generateChartData();
         for (let i = 0; i < rows.length; i += 500) {
           await supabase.from("chart").insert(rows.slice(i, i + 500));
         }
-        setTotalRows(rows.length);
+        setAllChartData(rows);
+      } else {
+        // Load all data for client-side monthly filtering
+        let allRows = [];
+        let from = 0;
+        const pageSize = 1000;
+        while (true) {
+          const { data } = await supabase.from("chart").select("*").range(from, from + pageSize - 1);
+          if (!data || data.length === 0) break;
+          allRows = allRows.concat(data);
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+        setAllChartData(allRows);
       }
-      await loadChartPage(1);
     } catch (e) { console.error(e); }
     setLoading(false);
-  }
-
-  async function loadChartPage(p) {
-    const from = (p - 1) * ROWS_PER_PAGE;
-    const to = from + ROWS_PER_PAGE - 1;
-    const { data } = await supabase.from("chart").select("*")
-      .order("year", { ascending: false })
-      .order("day", { ascending: false })
-      .range(from, to);
-    if (data) setChart(data);
-    setChartPage(p);
   }
 
   useEffect(() => {
@@ -260,7 +371,29 @@ function MainPage() {
 
   const dateStr = now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
-  const totalPages = Math.ceil(totalRows / ROWS_PER_PAGE);
+
+  // Navigation logic
+  const START_YEAR = 2016;
+  const START_MONTH = 0;
+  const todayYear = new Date().getFullYear();
+  const todayMonth = new Date().getMonth();
+
+  const hasPrev = !(viewYear === START_YEAR && viewMonth === START_MONTH);
+  const hasNext = !(viewYear === todayYear && viewMonth === todayMonth);
+
+  function goPrev() {
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
+    else setViewMonth(m => m - 1);
+  }
+  function goNext() {
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
+    else setViewMonth(m => m + 1);
+  }
+
+  const prevMonth = viewMonth === 0 ? 11 : viewMonth - 1;
+  const prevYear = viewMonth === 0 ? viewYear - 1 : viewYear;
+  const nextMonth = viewMonth === 11 ? 0 : viewMonth + 1;
+  const nextYear = viewMonth === 11 ? viewYear + 1 : viewYear;
 
   return (
     <div style={{ background: G.bg, minHeight: "100vh", color: G.text }}>
@@ -290,45 +423,28 @@ function MainPage() {
       <div className="im" style={{ margin: 16, border: `1px solid ${G.gold3}`, borderRadius: 4, padding: 16, textAlign: "center", fontSize: "0.95rem", color: G.gold, background: G.bg2 }}>
         Har roz ka result yahan update hota hai — Dubai King Official Platform
       </div>
-      <div style={{ textAlign: "center", background: `linear-gradient(160deg,#1a1408,${G.bg2})`, borderTop: `1px solid ${G.gold3}`, borderBottom: `1px solid ${G.gold3}`, padding: 14, marginTop: 8 }}>
+      <div style={{ textAlign: "center", background: `linear-gradient(160deg,#1a1408,${G.bg2})`, borderTop: `1px solid ${G.gold3}`, borderBottom: `1px solid ${G.gold3}`, padding: 14, marginTop: 8, marginBottom: 16 }}>
         <span className="pf" style={{ color: G.gold, fontSize: "0.85rem", letterSpacing: "0.25em" }}>◆ 2016 se Aaj Tak — Dubai King Chart ◆</span>
       </div>
+
       {loading ? (
         <div style={{ textAlign: "center", padding: 40, color: G.gold }}>
           <div className="pf" style={{ fontSize: "1.2rem" }}>Loading...</div>
         </div>
       ) : (
-        <>
-          <div style={{ overflowX: "auto", padding: "0 8px 8px" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
-              <thead>
-                <tr style={{ borderBottom: `1px solid ${G.gold3}` }}>
-                  {["Year","Month","Day","Dubai King"].map(h => (
-                    <th key={h} className="pf" style={{ color: G.gold, padding: "12px 10px", textAlign: "center", fontWeight: 700, letterSpacing: "0.1em", fontSize: "0.72rem" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {chart.map((row, i) => (
-                  <tr key={row.id} className="chart-row" style={{ borderBottom: "1px solid #1a1a10", background: i % 2 === 0 ? G.bg2 : G.bg }}>
-                    <td className="lb" style={{ padding: "10px", textAlign: "center", color: G.muted }}>{row.year}</td>
-                    <td className="pf" style={{ padding: "10px", textAlign: "center", color: G.text }}>{row.month}</td>
-                    <td className="pf" style={{ padding: "10px", textAlign: "center", color: G.text }}>{row.day}</td>
-                    <td className="pf" style={{ padding: "10px", textAlign: "center", color: G.gold, fontWeight: 700, fontSize: "1rem" }}>{row.result1}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {totalPages > 1 && (
-            <div style={{ display: "flex", justifyContent: "center", gap: 8, padding: "16px 8px", flexWrap: "wrap" }}>
-              {chartPage > 1 && <button className="btn-gold" style={{ padding: "8px 18px", fontSize: "0.75rem" }} onClick={() => loadChartPage(chartPage - 1)}>← Pehle</button>}
-              <span className="lb" style={{ color: G.muted, padding: "8px 12px", fontSize: "0.8rem" }}>Page {chartPage} / {totalPages}</span>
-              {chartPage < totalPages && <button className="btn-gold" style={{ padding: "8px 18px", fontSize: "0.75rem" }} onClick={() => loadChartPage(chartPage + 1)}>Aage →</button>}
-            </div>
-          )}
-        </>
+        <MonthlyChart
+          allData={allChartData}
+          viewYear={viewYear}
+          viewMonth={viewMonth}
+          onPrev={goPrev}
+          onNext={goNext}
+          hasPrev={hasPrev}
+          hasNext={hasNext}
+          prevLabel={`${MONTHS_FULL[prevMonth]} ${prevYear}`}
+          nextLabel={`${MONTHS_FULL[nextMonth]} ${nextYear}`}
+        />
       )}
+
       <footer style={{ textAlign: "center", padding: 20, color: G.muted, fontSize: "0.75rem", letterSpacing: "0.15em", borderTop: "1px solid #1a1710", fontFamily: "'Playfair Display',serif" }}>
         © 2026 Dubai King Result Chart — All Rights Reserved
       </footer>
