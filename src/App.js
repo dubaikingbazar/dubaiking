@@ -25,16 +25,10 @@ function getISTTime() {
   return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
 }
 
-function isResultTime() {
-  return true;
-}
-}
-
 export default function App() {
   const [result1, setResult1] = useState("--");
   const [chart, setChart] = useState([]);
   const [chartPage, setChartPage] = useState(1);
-  const [showResult, setShowResult] = useState(false);
   const [loading, setLoading] = useState(true);
   const initialized = useRef(false);
   const ROWS_PER_PAGE = 50;
@@ -76,13 +70,10 @@ export default function App() {
   }
 
   useEffect(() => {
-    // Realtime subscription
     const channel = supabase
       .channel("results-changes")
       .on("postgres_changes", {
-        event: "*",
-        schema: "public",
-        table: "results"
+        event: "*", schema: "public", table: "results"
       }, (payload) => {
         if (payload.new && payload.new.result1 !== undefined) {
           setResult1(payload.new.result1);
@@ -90,13 +81,6 @@ export default function App() {
       })
       .subscribe();
 
-    // Clock
-    const t = setInterval(() => {
-      setShowResult(isResultTime());
-    }, 1000);
-    setShowResult(isResultTime());
-
-    // Backup polling har 3 second
     const r = setInterval(async () => {
       try {
         const { data } = await supabase.from("results").select("*").eq("id", 1).single();
@@ -106,7 +90,6 @@ export default function App() {
 
     return () => {
       supabase.removeChannel(channel);
-      clearInterval(t);
       clearInterval(r);
     };
   }, []);
@@ -122,8 +105,6 @@ export default function App() {
         .im{font-family:'IM Fell English',serif;font-style:italic}
         .gold-grad{background:linear-gradient(180deg,#f0d080 0%,#c9a84c 50%,#8a6820 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
         .gold-line{width:80px;height:1px;margin:0 auto;background:linear-gradient(90deg,transparent,#c9a84c,transparent)}
-        .pulse{animation:pulse 1.4s infinite}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
         .chart-row:hover td{background:#1a1a10!important}
         .btn-gold{background:linear-gradient(135deg,#f0d080,#c9a84c,#8a6820);color:#000;border:none;padding:11px 28px;font-family:'Playfair Display',serif;font-weight:700;font-size:0.85rem;letter-spacing:0.1em;cursor:pointer;border-radius:2px}
         ::-webkit-scrollbar{width:6px}
@@ -151,16 +132,9 @@ export default function App() {
       <div style={{textAlign:"center",padding:"30px 16px",borderBottom:"1px solid #1e1c14",background:"#0d0d0d"}}>
         <div className="pf" style={{fontSize:"1.8rem",fontWeight:900,letterSpacing:"0.15em",color:"#c0392b"}}>DUBAI KING</div>
         <div className="gold-line" style={{margin:"8px auto"}} />
-        {showResult ? (
-          <div className="pf gold-grad" style={{fontSize:"6rem",fontWeight:900,lineHeight:1,margin:"8px 0"}}>
-            {loading ? "..." : result1}
-          </div>
-        ) : (
-          <div style={{margin:"20px 0"}}>
-            <div className="pf pulse" style={{fontSize:"2.5rem",fontWeight:900,color:"#c0392b",letterSpacing:"0.2em"}}>WAIT</div>
-            <div className="pf" style={{color:"#6a6040",fontSize:"0.85rem",marginTop:10,letterSpacing:"0.15em"}}>Result 7:30 PM IST pe aayega</div>
-          </div>
-        )}
+        <div className="pf gold-grad" style={{fontSize:"6rem",fontWeight:900,lineHeight:1,margin:"8px 0"}}>
+          {loading ? "..." : result1}
+        </div>
         <div className="gold-line" style={{margin:"8px auto"}} />
       </div>
 
