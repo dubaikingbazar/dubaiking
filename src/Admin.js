@@ -54,47 +54,47 @@ export default function Admin() {
     loadData();
   }, [loggedIn]);
 
+  // Auto reset at 12 AM
   useEffect(() => {
     if (!loggedIn) return;
     const t = setInterval(async () => {
       const ist = getISTTime();
       const h = ist.getHours();
-      if (h >= 5 && h < 6 && !resetDone.current) {
+      const m = ist.getMinutes();
+      if (h === 0 && m === 0 && !resetDone.current) {
         resetDone.current = true;
         await autoResetAll();
-      } else if (h >= 6) {
+      } else if (h !== 0) {
         resetDone.current = false;
       }
-    }, 60000);
+    }, 30000);
     return () => clearInterval(t);
   }, [loggedIn]);
 
   async function autoResetAll() {
     try {
-      const ist = getISTTime();
-      const yesterday = new Date(ist);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const day = yesterday.getDate();
-      const month = yesterday.getMonth() + 1;
-      const year = yesterday.getFullYear();
-
       // Dubai King reset
       const { data: rData } = await supabase.from("results").select("*").eq("id", 1).single();
       if (rData && rData.result2 && rData.result2 !== "WAIT") {
-        await supabase.from("chart").update({ result1: rData.result2 }).eq("year", year).eq("month", month).eq("day", day);
-        await supabase.from("results").upsert({ id: 1, result1: rData.result2, result2: "WAIT", updated_at: new Date().toISOString() });
+        await supabase.from("results").upsert({ 
+          id: 1, 
+          result1: rData.result2, 
+          result2: "WAIT",
+          updated_at: new Date().toISOString() 
+        });
         setResult1(rData.result2);
         setResult2("WAIT");
       }
 
       // Aashapura reset
-      const { data: aData } = await supabase.from("aashapura_results").select("*").eq("id", 1).single();
-      if (aData && aData.close_digits && aData.close_digits !== "XXX") {
-        await supabase.from("aashapura").upsert({ year, month, day, open_digits: aData.open_digits, close_digits: aData.close_digits });
-        await supabase.from("aashapura_results").upsert({ id: 1, open_digits: "XXX", close_digits: "XXX", updated_at: new Date().toISOString() });
-        setAOpen("XXX");
-        setAClose("XXX");
-      }
+      await supabase.from("aashapura_results").upsert({ 
+        id: 1, 
+        open_digits: "XXX", 
+        close_digits: "XXX",
+        updated_at: new Date().toISOString() 
+      });
+      setAOpen("XXX");
+      setAClose("XXX");
 
       setAutoReset(true);
       setTimeout(() => setAutoReset(false), 5000);
@@ -113,14 +113,28 @@ export default function Admin() {
   async function saveResult1() {
     const val = adminR1.trim();
     if (!val) return;
+    const ist = getISTTime();
+    const day = ist.getDate();
+    const month = ist.getMonth() + 1;
+    const year = ist.getFullYear();
+    // Save to results table
     await supabase.from("results").upsert({ id: 1, result1: val, updated_at: new Date().toISOString() });
+    // Save to chart
+    await supabase.from("chart").upsert({ year, month, day, result1: val }, { onConflict: "year,month,day" });
     setResult1(val); setSaved1(true); setTimeout(() => setSaved1(false), 2500); setAdminR1("");
   }
 
   async function saveResult2() {
     const val = adminR2.trim();
     if (!val) return;
+    const ist = getISTTime();
+    const day = ist.getDate();
+    const month = ist.getMonth() + 1;
+    const year = ist.getFullYear();
+    // Save to results table
     await supabase.from("results").upsert({ id: 1, result2: val, updated_at: new Date().toISOString() });
+    // Save to chart
+    await supabase.from("chart").upsert({ year, month, day, result1: val }, { onConflict: "year,month,day" });
     setResult2(val); setSaved2(true); setTimeout(() => setSaved2(false), 2500); setAdminR2("");
   }
 
@@ -134,7 +148,15 @@ export default function Admin() {
   async function saveAClose() {
     const val = adminAClose.trim();
     if (!val || val.length !== 3) return;
+    const ist = getISTTime();
+    const day = ist.getDate();
+    const month = ist.getMonth() + 1;
+    const year = ist.getFullYear();
+    // Save to aashapura_results
     await supabase.from("aashapura_results").upsert({ id: 1, close_digits: val, updated_at: new Date().toISOString() });
+    // Save to aashapura chart
+    const currentOpen = aOpen !== "XXX" ? aOpen : adminAOpen;
+    await supabase.from("aashapura").upsert({ year, month, day, open_digits: currentOpen, close_digits: val }, { onConflict: "year,month,day" });
     setAClose(val); setSavedAClose(true); setTimeout(() => setSavedAClose(false), 2500); setAdminAClose("");
   }
 
@@ -190,7 +212,7 @@ export default function Admin() {
 
       {autoReset && (
         <div style={{background:"#1a3a1a",border:"1px solid #4caf50",margin:16,padding:12,borderRadius:4,textAlign:"center",color:"#4caf50",fontSize:"0.8rem"}}>
-          ✓ Auto reset ho gaya — dono games chart mein save ho gaye!
+          ✓ 12 AM — Date change ho gayi! Dono games reset ho gaye!
         </div>
       )}
 
@@ -207,7 +229,7 @@ export default function Admin() {
               onKeyDown={e => e.key==="Enter" && saveResult1()} style={{marginBottom:10}} />
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <button className="btn-gold" onClick={saveResult1}>💾 SAVE</button>
-              {saved1 && <span style={{color:"#4caf50",fontSize:"0.75rem"}}>✓ Live!</span>}
+              {saved1 && <span style={{color:"#4caf50",fontSize:"0.75rem"}}>✓ Chart mein save!</span>}
             </div>
           </div>
           <div style={{background:"#0d0d0d",border:"1px solid #8a6820",borderRadius:4,padding:20}}>
@@ -218,7 +240,7 @@ export default function Admin() {
               onKeyDown={e => e.key==="Enter" && saveResult2()} style={{marginBottom:10}} />
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <button className="btn-gold" onClick={saveResult2}>💾 SAVE</button>
-              {saved2 && <span style={{color:"#4caf50",fontSize:"0.75rem"}}>✓ Live!</span>}
+              {saved2 && <span style={{color:"#4caf50",fontSize:"0.75rem"}}>✓ Chart mein save!</span>}
             </div>
           </div>
         </div>
@@ -252,7 +274,7 @@ export default function Admin() {
               onKeyDown={e => e.key==="Enter" && saveAClose()} style={{marginBottom:10}} />
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <button className="btn-blue" onClick={saveAClose}>💾 SAVE CLOSE</button>
-              {savedAClose && <span style={{color:"#4caf50",fontSize:"0.75rem"}}>✓ Live!</span>}
+              {savedAClose && <span style={{color:"#4caf50",fontSize:"0.75rem"}}>✓ Chart mein save!</span>}
             </div>
           </div>
         </div>
