@@ -37,11 +37,22 @@ export default function AashapuraChart() {
   async function loadChart() {
     setLoading(true);
     try {
-      const { data } = await supabase.from("aashapura").select("*")
-        .order("year", { ascending: false }).order("month", { ascending: false }).order("day", { ascending: true });
-      if (!data) return;
+      let allData = [];
+      let from = 0;
+      const batchSize = 1000;
+      while (true) {
+        const { data, error } = await supabase.from("aashapura").select("*")
+          .order("year", { ascending: true })
+          .order("month", { ascending: true })
+          .order("day", { ascending: true })
+          .range(from, from + batchSize - 1);
+        if (error || !data || data.length === 0) break;
+        allData = [...allData, ...data];
+        if (data.length < batchSize) break;
+        from += batchSize;
+      }
       const grouped = {};
-      data.forEach(row => {
+      allData.forEach(row => {
         const key = `${row.year}-${row.month}`;
         if (!grouped[key]) grouped[key] = { year: row.year, month: row.month, days: {} };
         grouped[key].days[row.day] = formatResult(row.open_digits, row.close_digits);
