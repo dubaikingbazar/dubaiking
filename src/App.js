@@ -59,7 +59,7 @@ export default function App() {
     data.forEach(row => {
       const key = `${row.year}-${row.month}`;
       if (!grouped[key]) grouped[key] = { year: row.year, month: row.month, days: {} };
-      grouped[key].days[row.day] = row.result1;
+      grouped[key].days[row.day] = row.result1 ? String(row.result1).padStart(2, '0') : 'XX';
     });
     setChartData(grouped);
   }
