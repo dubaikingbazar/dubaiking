@@ -183,7 +183,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* AASHAPURA CARD - Dubai King ke niche */}
+      {/* AASHAPURA CARD */}
       <div style={{maxWidth:700,margin:"16px auto 0",padding:"0 16px"}}>
         <div style={{background:"linear-gradient(145deg,#060810,#0a0d12)",border:"1px solid #1a2a3a",borderRadius:4,padding:"24px 16px",textAlign:"center",position:"relative",boxShadow:"0 0 60px rgba(74,159,212,0.06)"}}>
           <div style={{position:"absolute",top:8,left:10,color:"#2a4a6a",fontSize:"0.7rem"}}>◆</div>
@@ -203,11 +203,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* Notice */}
-      
-
       {/* Dubai King Chart */}
-      <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",borderTop:"1px solid #2a2010",borderBottom:"1px solid #2a2010",padding:"16px",textAlign:"center"}}>
+      <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",borderTop:"1px solid #2a2010",borderBottom:"1px solid #2a2010",padding:"16px",textAlign:"center",marginTop:24}}>
         <div className="cin gold-grad" style={{fontSize:"1rem",fontWeight:700,letterSpacing:"0.3em"}}>DUBAI KING MONTHLY CHART</div>
         <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.5em",marginTop:4}}>2016 — 2026</div>
       </div>
