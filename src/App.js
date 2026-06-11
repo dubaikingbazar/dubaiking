@@ -154,7 +154,7 @@ export default function App() {
 
       <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",padding:"50px 16px 40px",textAlign:"center",borderBottom:"1px solid #1a1408"}}>
         <div className="cin" style={{color:"#8a6820",fontSize:"0.65rem",letterSpacing:"0.5em",marginBottom:12}}>◆ ◆ ◆</div>
-        <div className="cin gold-grad" style={{fontSize:"clamp(1.6rem,5vw,3rem)",fontWeight:900,letterSpacing:"0.1em",lineHeight:1.2,filter:"drop-shadow(0 0 20px rgba(201,168,76,0.3))"}}>DUBAI KING</div>
+        <div className="cin gold-grad" style={{fontSize:"clamp(1.6rem,5vw,3rem)",fontWeight:900,letterSpacing:"0.1em",lineHeight:1.2,filter:"drop-shadow(0 0 20px rgba(201,168,76,0.3))"}}>GOLUWALA</div>
         <div className="cin gold-grad" style={{fontSize:"clamp(1rem,3vw,1.6rem)",fontWeight:400,letterSpacing:"0.2em",marginTop:4}}>RESULT & CHART 2026</div>
         <div style={{width:200,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"16px auto"}} />
         <div className="cor" style={{color:"#8a6820",fontSize:"0.85rem",letterSpacing:"0.2em",fontStyle:"italic"}}>Premium Result Platform</div>
@@ -169,7 +169,7 @@ export default function App() {
           <div style={{position:"absolute",top:8,left:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
           <div style={{position:"absolute",top:8,right:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
           <div className="cin" style={{color:"#8a6820",fontSize:"0.6rem",letterSpacing:"0.3em",marginBottom:4}}>{yesterdayDay} {yesterdayMonth}</div>
-          <div className="cin" style={{color:"#c0392b",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:2}}>DUBAI KING</div>
+          <div className="cin" style={{color:"#c0392b",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:2}}>GOLUWALA</div>
           <div className="cin" style={{color:"#6a6040",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>07:30 PM</div>
           <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"0 auto 12px"}} />
           <div className="cin gold-grad" style={{fontSize:"clamp(3rem,10vw,5rem)",fontWeight:900,lineHeight:1,filter:"drop-shadow(0 0 15px rgba(201,168,76,0.4))"}}>{loading ? "..." : result1}</div>
@@ -179,7 +179,7 @@ export default function App() {
           <div style={{position:"absolute",top:8,left:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
           <div style={{position:"absolute",top:8,right:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
           <div className="cin" style={{color:"#8a6820",fontSize:"0.6rem",letterSpacing:"0.3em",marginBottom:4}}>{todayDay} {todayMonth}</div>
-          <div className="cin" style={{color:"#c0392b",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:2}}>DUBAI KING</div>
+          <div className="cin" style={{color:"#c0392b",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:2}}>GOLUWALA</div>
           <div className="cin" style={{color:"#6a6040",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>07:30 PM</div>
           <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"0 auto 12px"}} />
           {isWait ? (
@@ -214,7 +214,7 @@ export default function App() {
       </div>
 
       <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",borderTop:"1px solid #2a2010",borderBottom:"1px solid #2a2010",padding:"16px",textAlign:"center",marginTop:24}}>
-        <div className="cin gold-grad" style={{fontSize:"1rem",fontWeight:700,letterSpacing:"0.3em"}}>DUBAI KING MONTHLY CHART</div>
+        <div className="cin gold-grad" style={{fontSize:"1rem",fontWeight:700,letterSpacing:"0.3em"}}>GOLUWALA MONTHLY CHART</div>
         <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.5em",marginTop:4}}>2016 — 2026</div>
       </div>
 
@@ -230,7 +230,7 @@ export default function App() {
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",background:"#0d0b06",borderBottom:"1px solid #2a2010"}}>
               <div className="cin" style={{color:"#c0392b",padding:"10px",textAlign:"center",fontSize:"0.65rem",borderRight:"1px solid #2a2010"}}>DATE</div>
-              <div className="cin" style={{color:"#c9a84c",padding:"10px",textAlign:"center",fontSize:"0.65rem"}}>DUBAI KING</div>
+              <div className="cin" style={{color:"#c9a84c",padding:"10px",textAlign:"center",fontSize:"0.65rem"}}>GOLUWALA</div>
             </div>
             {Array.from({length: new Date(selYear, selMonth, 0).getDate()}, (_, i) => i+1).map(day => (
               <div key={day} style={{display:"grid",gridTemplateColumns:"1fr 1fr",background:day%2===0?"#0a0a0a":"#070707",borderBottom:"1px solid #111008"}}>
@@ -259,7 +259,7 @@ export default function App() {
 
       <div style={{background:"linear-gradient(90deg,#8a6820,#f5e070,#c9a84c,#f5e070,#8a6820)",height:3,marginTop:40}} />
       <footer style={{textAlign:"center",padding:"20px",background:"#0a0a0a"}}>
-        <div className="cin" style={{color:"#2a2010",fontSize:"0.6rem",letterSpacing:"0.3em"}}>© 2026 DUBAI KING & AASHAPURA — ALL RIGHTS RESERVED</div>
+        <div className="cin" style={{color:"#2a2010",fontSize:"0.6rem",letterSpacing:"0.3em"}}>© 2026 GOLUWALA & AASHAPURA — ALL RIGHTS RESERVED</div>
       </footer>
     </div>
   );
