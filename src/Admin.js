@@ -27,7 +27,7 @@ export default function Admin() {
   const [loginPass, setLoginPass] = useState("");
   const [loginErr, setLoginErr] = useState("");
 
-  // Dubai King
+  // GOLUWALA
   const [result1, setResult1] = useState("--");
   const [result2, setResult2] = useState("WAIT");
   const [adminR1, setAdminR1] = useState("");
@@ -73,7 +73,7 @@ export default function Admin() {
 
   async function autoResetAll() {
     try {
-      // Dubai King reset
+      // GOLUWALA reset
       const { data: rData } = await supabase.from("results").select("*").eq("id", 1).single();
       if (rData && rData.result2 && rData.result2 !== "WAIT") {
         await supabase.from("results").upsert({ 
@@ -184,7 +184,7 @@ export default function Admin() {
       <style>{css}</style>
       <div style={{background:"#0d0d0d",border:"1px solid #8a6820",borderRadius:4,padding:"36px 28px",width:"100%",maxWidth:380,textAlign:"center"}}>
         <div className="cin gold-grad" style={{fontSize:"1.8rem",fontWeight:900,marginBottom:6}}>ADMIN LOGIN</div>
-        <div className="cin" style={{color:"#6a6040",fontSize:"0.65rem",letterSpacing:"0.3em",marginBottom:24}}>◆ DUBAI KING & AASHAPURA ◆</div>
+        <div className="cin" style={{color:"#6a6040",fontSize:"0.65rem",letterSpacing:"0.3em",marginBottom:24}}>◆ GOLUWALA & AASHAPURA ◆</div>
         <input className="admin-input" type="password" placeholder="Password dalein..."
           value={loginPass} onChange={e => setLoginPass(e.target.value)}
           onKeyDown={e => e.key==="Enter" && handleLogin()} style={{marginBottom:10}} />
@@ -218,8 +218,8 @@ export default function Admin() {
 
       <div style={{maxWidth:800,margin:"0 auto",padding:"24px 16px"}}>
 
-        {/* Dubai King */}
-        <div className="cin" style={{color:"#c9a84c",fontSize:"0.7rem",letterSpacing:"0.3em",marginBottom:12,borderBottom:"1px solid #2a2010",paddingBottom:8}}>◆ DUBAI KING</div>
+        {/* GOLUWALA */}
+        <div className="cin" style={{color:"#c9a84c",fontSize:"0.7rem",letterSpacing:"0.3em",marginBottom:12,borderBottom:"1px solid #2a2010",paddingBottom:8}}>◆ GOLUWALA</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:28}}>
           <div style={{background:"#0d0d0d",border:"1px solid #8a6820",borderRadius:4,padding:20}}>
             <div className="cin" style={{color:"#c9a84c",fontSize:"0.75rem",fontWeight:700,marginBottom:4}}>PREVIOUS (Kal Ka)</div>
