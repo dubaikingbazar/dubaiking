@@ -52,16 +52,29 @@ export default function App() {
   }
 
   async function loadChart() {
-    const { data } = await supabase.from("chart").select("*")
-      .order("year", { ascending: false }).order("month", { ascending: false }).order("day", { ascending: true });
-    if (!data) return;
-    const grouped = {};
-    data.forEach(row => {
-      const key = `${row.year}-${row.month}`;
-      if (!grouped[key]) grouped[key] = { year: row.year, month: row.month, days: {} };
-      grouped[key].days[row.day] = row.result1 ? String(row.result1).padStart(2, '0') : 'XX';
-    });
-    setChartData(grouped);
+    try {
+      let allData = [];
+      let from = 0;
+      const batchSize = 1000;
+      while (true) {
+        const { data, error } = await supabase.from("chart").select("*")
+          .order("year", { ascending: false })
+          .order("month", { ascending: false })
+          .order("day", { ascending: true })
+          .range(from, from + batchSize - 1);
+        if (error || !data || data.length === 0) break;
+        allData = [...allData, ...data];
+        if (data.length < batchSize) break;
+        from += batchSize;
+      }
+      const grouped = {};
+      allData.forEach(row => {
+        const key = `${row.year}-${row.month}`;
+        if (!grouped[key]) grouped[key] = { year: row.year, month: row.month, days: {} };
+        grouped[key].days[row.day] = row.result1 ? String(row.result1).padStart(2, '0') : 'XX';
+      });
+      setChartData(grouped);
+    } catch(e) { console.error(e); }
   }
 
   useEffect(() => {
@@ -139,7 +152,6 @@ export default function App() {
         <div className="cin" style={{color:"#8a6820",fontSize:"0.6rem",letterSpacing:"0.3em"}}>◆ OFFICIAL PLATFORM ◆</div>
       </nav>
 
-      {/* DUBAI KING HEADER */}
       <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",padding:"50px 16px 40px",textAlign:"center",borderBottom:"1px solid #1a1408"}}>
         <div className="cin" style={{color:"#8a6820",fontSize:"0.65rem",letterSpacing:"0.5em",marginBottom:12}}>◆ ◆ ◆</div>
         <div className="cin gold-grad" style={{fontSize:"clamp(1.6rem,5vw,3rem)",fontWeight:900,letterSpacing:"0.1em",lineHeight:1.2,filter:"drop-shadow(0 0 20px rgba(201,168,76,0.3))"}}>DUBAI KING</div>
@@ -152,7 +164,6 @@ export default function App() {
         <span className="cin" style={{color:"#c9a84c",fontSize:"0.75rem",letterSpacing:"0.15em"}}>{dateStr} &nbsp;◆&nbsp; {timeStr} (IST)</span>
       </div>
 
-      {/* Dubai King 2 Cards */}
       <div style={{maxWidth:700,margin:"40px auto 0",padding:"0 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
         <div style={{background:"linear-gradient(145deg,#0d0b06,#111008)",border:"1px solid #2a2010",borderRadius:4,padding:"30px 16px",textAlign:"center",position:"relative"}}>
           <div style={{position:"absolute",top:8,left:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
@@ -183,9 +194,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* AASHAPURA CARD */}
       <div style={{maxWidth:700,margin:"16px auto 0",padding:"0 16px"}}>
-        <div style={{background:"linear-gradient(145deg,#060810,#0a0d12)",border:"1px solid #1a2a3a",borderRadius:4,padding:"24px 16px",textAlign:"center",position:"relative",boxShadow:"0 0 60px rgba(74,159,212,0.06)"}}>
+        <div style={{background:"linear-gradient(145deg,#060810,#0a0d12)",border:"1px solid #1a2a3a",borderRadius:4,padding:"24px 16px",textAlign:"center",position:"relative"}}>
           <div style={{position:"absolute",top:8,left:10,color:"#2a4a6a",fontSize:"0.7rem"}}>◆</div>
           <div style={{position:"absolute",top:8,right:10,color:"#2a4a6a",fontSize:"0.7rem"}}>◆</div>
           <div className="cin" style={{color:"#2a4a6a",fontSize:"0.6rem",letterSpacing:"0.3em",marginBottom:4}}>{todayDay} {todayMonth}</div>
@@ -203,7 +213,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* Dubai King Chart */}
       <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",borderTop:"1px solid #2a2010",borderBottom:"1px solid #2a2010",padding:"16px",textAlign:"center",marginTop:24}}>
         <div className="cin gold-grad" style={{fontSize:"1rem",fontWeight:700,letterSpacing:"0.3em"}}>DUBAI KING MONTHLY CHART</div>
         <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.5em",marginTop:4}}>2016 — 2026</div>
