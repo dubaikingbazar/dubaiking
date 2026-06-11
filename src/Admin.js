@@ -19,8 +19,7 @@ function calcJodi(open, close) {
 function formatResult(open, close) {
   const o = open || "XXX";
   const c = close || "XXX";
-  const jodi = calcJodi(o, c);
-  return `${o}-${jodi}-${c}`;
+  return `${o}-${calcJodi(o,c)}-${c}`;
 }
 
 export default function Admin() {
@@ -44,16 +43,9 @@ export default function Admin() {
   const [savedAOpen, setSavedAOpen] = useState(false);
   const [savedAClose, setSavedAClose] = useState(false);
 
-  // Chart
-  const [chart, setChart] = useState([]);
-  const [chartPage, setChartPage] = useState(1);
-  const [editIdx, setEditIdx] = useState(null);
-  const [editVal, setEditVal] = useState("");
   const [autoReset, setAutoReset] = useState(false);
-
   const initialized = useRef(false);
   const resetDone = useRef(false);
-  const ROWS_PER_PAGE = 50;
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -106,7 +98,6 @@ export default function Admin() {
 
       setAutoReset(true);
       setTimeout(() => setAutoReset(false), 5000);
-      await loadChartPage(1);
     } catch(e) { console.error(e); }
   }
 
@@ -116,18 +107,7 @@ export default function Admin() {
       if (rData) { setResult1(rData.result1); setResult2(rData.result2 || "WAIT"); }
       const { data: aData } = await supabase.from("aashapura_results").select("*").eq("id", 1).single();
       if (aData) { setAOpen(aData.open_digits || "XXX"); setAClose(aData.close_digits || "XXX"); }
-      await loadChartPage(1);
     } catch(e) { console.error(e); }
-  }
-
-  async function loadChartPage(p) {
-    const from = (p - 1) * ROWS_PER_PAGE;
-    const to = from + ROWS_PER_PAGE - 1;
-    const { data } = await supabase.from("chart").select("*")
-      .order("year", { ascending: false }).order("month", { ascending: false }).order("day", { ascending: false })
-      .range(from, to);
-    if (data) setChart(data);
-    setChartPage(p);
   }
 
   async function saveResult1() {
@@ -158,12 +138,6 @@ export default function Admin() {
     setAClose(val); setSavedAClose(true); setTimeout(() => setSavedAClose(false), 2500); setAdminAClose("");
   }
 
-  async function saveChartEdit(id) {
-    await supabase.from("chart").update({ result1: editVal }).eq("id", id);
-    setChart(chart.map(r => r.id === id ? { ...r, result1: editVal } : r));
-    setEditIdx(null);
-  }
-
   function handleLogin() {
     if (loginPass === ADMIN_PASS) { setLoggedIn(true); setLoginErr(""); }
     else setLoginErr("Galat password!");
@@ -181,7 +155,6 @@ export default function Admin() {
     .btn-gold{background:linear-gradient(135deg,#f5e070,#c9a84c,#8a6820);color:#000;border:none;padding:10px 24px;font-family:'Cinzel',serif;font-weight:700;font-size:0.75rem;letter-spacing:0.1em;cursor:pointer;border-radius:2px}
     .btn-blue{background:linear-gradient(135deg,#2a6a94,#4a9fd4);color:#fff;border:none;padding:10px 24px;font-family:'Cinzel',serif;font-weight:700;font-size:0.75rem;letter-spacing:0.1em;cursor:pointer;border-radius:2px}
     .btn-red{background:linear-gradient(135deg,#8b0000,#c0392b);color:#fff;border:none;padding:8px 16px;font-family:'Cinzel',serif;font-weight:700;font-size:0.7rem;cursor:pointer;border-radius:2px}
-    .chart-row:hover td{background:#1a1a10!important}
   `;
 
   if (!loggedIn) return (
@@ -225,8 +198,7 @@ export default function Admin() {
 
         {/* Dubai King */}
         <div className="cin" style={{color:"#c9a84c",fontSize:"0.7rem",letterSpacing:"0.3em",marginBottom:12,borderBottom:"1px solid #2a2010",paddingBottom:8}}>◆ DUBAI KING</div>
-
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:28}}>
           <div style={{background:"#0d0d0d",border:"1px solid #8a6820",borderRadius:4,padding:20}}>
             <div className="cin" style={{color:"#c9a84c",fontSize:"0.75rem",fontWeight:700,marginBottom:4}}>PREVIOUS (Kal Ka)</div>
             <div style={{color:"#6a6040",fontSize:"0.7rem",marginBottom:12}}>Current: <strong style={{color:"#f5e070"}}>{result1}</strong></div>
@@ -255,12 +227,12 @@ export default function Admin() {
         <div className="cin" style={{color:"#4a9fd4",fontSize:"0.7rem",letterSpacing:"0.3em",marginBottom:12,borderBottom:"1px solid #1a2a3a",paddingBottom:8}}>◆ AASHAPURA</div>
 
         <div style={{marginBottom:12,background:"#0a0d12",border:"1px solid #1a2a3a",borderRadius:4,padding:12,textAlign:"center"}}>
-          <div className="cin" style={{color:"#4a9fd4",fontSize:"1rem",letterSpacing:"0.1em"}}>
+          <div className="cin" style={{color:"#4a9fd4",fontSize:"1.1rem",letterSpacing:"0.1em"}}>
             {formatResult(aOpen, aClose)}
           </div>
         </div>
 
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           <div style={{background:"#0a0d12",border:"1px solid #1a2a3a",borderRadius:4,padding:20}}>
             <div className="cin" style={{color:"#4a9fd4",fontSize:"0.75rem",fontWeight:700,marginBottom:4}}>OPEN (3 Digits)</div>
             <div style={{color:"#2a4a6a",fontSize:"0.7rem",marginBottom:12}}>Current: <strong style={{color:"#4a9fd4"}}>{aOpen}</strong></div>
@@ -285,48 +257,6 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Chart Edit */}
-        <div style={{background:"#0d0d0d",border:"1px solid #8a6820",borderRadius:4,padding:24}}>
-          <div className="cin" style={{color:"#c9a84c",fontSize:"0.85rem",fontWeight:700,letterSpacing:"0.15em",marginBottom:16}}>◆ DUBAI KING CHART EDIT</div>
-          <div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",fontSize:"0.82rem"}}>
-              <thead>
-                <tr style={{borderBottom:"1px solid #8a6820"}}>
-                  {["Year","Month","Day","Result","Action"].map(h => (
-                    <th key={h} className="cin" style={{color:"#c9a84c",padding:"10px 8px",textAlign:"left",fontWeight:700,fontSize:"0.65rem"}}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {chart.map((row) => (
-                  <tr key={row.id} className="chart-row" style={{borderBottom:"1px solid #1a1a10"}}>
-                    <td style={{padding:"9px 8px",color:"#6a6040"}}>{row.year}</td>
-                    <td style={{padding:"9px 8px",color:"#e8dfc0"}}>{MONTHS[row.month-1]?.substring(0,3)}</td>
-                    <td style={{padding:"9px 8px",color:"#e8dfc0"}}>{String(row.day).padStart(2,"0")}</td>
-                    <td style={{padding:"9px 8px"}}>
-                      {editIdx === row.id
-                        ? <input className="admin-input" type="text" value={editVal} onChange={e => setEditVal(e.target.value)} style={{width:80,padding:"4px 8px"}} />
-                        : <span className="cin" style={{color:"#c9a84c",fontWeight:700}}>{row.result1}</span>}
-                    </td>
-                    <td style={{padding:"9px 8px"}}>
-                      {editIdx === row.id
-                        ? <div style={{display:"flex",gap:6}}>
-                            <button className="btn-gold" style={{padding:"5px 10px",fontSize:"0.65rem"}} onClick={() => saveChartEdit(row.id)}>✓</button>
-                            <button className="btn-red" style={{padding:"5px 8px",fontSize:"0.65rem"}} onClick={() => setEditIdx(null)}>✕</button>
-                          </div>
-                        : <button className="btn-red" style={{padding:"5px 10px",fontSize:"0.65rem"}} onClick={() => { setEditIdx(row.id); setEditVal(row.result1); }}>Edit</button>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div style={{display:"flex",gap:8,marginTop:16,justifyContent:"center"}}>
-            {chartPage > 1 && <button className="btn-gold" style={{padding:"6px 16px"}} onClick={() => loadChartPage(chartPage-1)}>◀ Prev</button>}
-            <span className="cin" style={{color:"#6a6040",padding:"6px 10px",fontSize:"0.7rem"}}>Page {chartPage}</span>
-            <button className="btn-gold" style={{padding:"6px 16px"}} onClick={() => loadChartPage(chartPage+1)}>Next ▶</button>
-          </div>
-        </div>
       </div>
 
       <div style={{background:"linear-gradient(90deg,#8a6820,#f5e070,#c9a84c,#f5e070,#8a6820)",height:3,marginTop:40}} />
