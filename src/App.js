@@ -153,7 +153,7 @@ export default function App() {
       </div>
 
       {/* Dubai King 2 Cards */}
-      <div style={{maxWidth:700,margin:"40px auto",padding:"0 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+      <div style={{maxWidth:700,margin:"40px auto 0",padding:"0 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
         <div style={{background:"linear-gradient(145deg,#0d0b06,#111008)",border:"1px solid #2a2010",borderRadius:4,padding:"30px 16px",textAlign:"center",position:"relative"}}>
           <div style={{position:"absolute",top:8,left:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
           <div style={{position:"absolute",top:8,right:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
@@ -183,7 +183,28 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{maxWidth:700,margin:"0 auto 16px",padding:"0 16px"}}>
+      {/* AASHAPURA CARD - Dubai King ke niche */}
+      <div style={{maxWidth:700,margin:"16px auto 0",padding:"0 16px"}}>
+        <div style={{background:"linear-gradient(145deg,#060810,#0a0d12)",border:"1px solid #1a2a3a",borderRadius:4,padding:"24px 16px",textAlign:"center",position:"relative",boxShadow:"0 0 60px rgba(74,159,212,0.06)"}}>
+          <div style={{position:"absolute",top:8,left:10,color:"#2a4a6a",fontSize:"0.7rem"}}>◆</div>
+          <div style={{position:"absolute",top:8,right:10,color:"#2a4a6a",fontSize:"0.7rem"}}>◆</div>
+          <div className="cin" style={{color:"#2a4a6a",fontSize:"0.6rem",letterSpacing:"0.3em",marginBottom:4}}>{todayDay} {todayMonth}</div>
+          <div className="cin" style={{color:"#4a9fd4",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:2}}>AASHAPURA</div>
+          <div className="cin" style={{color:"#2a4a6a",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>OPEN: 07:15 PM &nbsp;◆&nbsp; CLOSE: 08:15 PM</div>
+          <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#4a9fd4,transparent)",margin:"0 auto 12px"}} />
+          <div className="cin" style={{fontSize:"clamp(1.2rem,4vw,2rem)",fontWeight:900,letterSpacing:"0.15em",color:"#4a9fd4",filter:"drop-shadow(0 0 10px rgba(74,159,212,0.4))"}}>
+            {aResult}
+          </div>
+          <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#4a9fd4,transparent)",margin:"12px auto"}} />
+          <button onClick={() => window.location.href="/aashapura-chart"} className="cin"
+            style={{background:"linear-gradient(135deg,#2a6a94,#4a9fd4)",color:"#fff",border:"none",padding:"10px 24px",fontSize:"0.65rem",letterSpacing:"0.2em",cursor:"pointer",borderRadius:2}}>
+            📊 CHART DEKHO
+          </button>
+        </div>
+      </div>
+
+      {/* Notice */}
+      <div style={{maxWidth:700,margin:"16px auto",padding:"0 16px"}}>
         <div className="cor" style={{border:"1px solid #1a1408",padding:"14px 20px",textAlign:"center",fontSize:"0.9rem",color:"#8a6820",fontStyle:"italic",background:"#0a0a0a"}}>
           ❝ Har roz ka result 7:30 PM pe update hota hai — Dubai King Official Platform ❞
         </div>
@@ -234,42 +255,7 @@ export default function App() {
         </div>
       )}
 
-      {/* AASHAPURA SECTION */}
-      <div style={{background:"linear-gradient(180deg,#06090d,#070707)",padding:"50px 16px 40px",textAlign:"center",borderTop:"2px solid #1a2a3a",borderBottom:"1px solid #1a2a3a",marginTop:40}}>
-        <div className="cin" style={{color:"#4a7a9b",fontSize:"0.65rem",letterSpacing:"0.5em",marginBottom:12}}>◆ ◆ ◆</div>
-        <div className="cin" style={{fontSize:"clamp(1.6rem,5vw,3rem)",fontWeight:900,letterSpacing:"0.1em",lineHeight:1.2,background:"linear-gradient(180deg,#a8d8f0,#4a9fd4,#2a6a94)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",filter:"drop-shadow(0 0 20px rgba(74,159,212,0.3))"}}>AASHAPURA</div>
-        <div className="cin" style={{fontSize:"clamp(0.8rem,2vw,1.2rem)",fontWeight:400,letterSpacing:"0.2em",marginTop:4,color:"#4a7a9b"}}>RESULT & CHART 2026</div>
-        <div style={{width:200,height:1,background:"linear-gradient(90deg,transparent,#4a9fd4,transparent)",margin:"16px auto"}} />
-        <div className="cor" style={{color:"#4a7a9b",fontSize:"0.85rem",letterSpacing:"0.2em",fontStyle:"italic"}}>Premium Result Platform</div>
-      </div>
-
-      {/* Aashapura Result Card */}
-      <div style={{maxWidth:500,margin:"40px auto",padding:"0 16px"}}>
-        <div style={{background:"linear-gradient(145deg,#060810,#0a0d12)",border:"1px solid #1a2a3a",borderRadius:4,padding:"30px 16px",textAlign:"center",position:"relative",boxShadow:"0 0 60px rgba(74,159,212,0.06)"}}>
-          <div style={{position:"absolute",top:8,left:10,color:"#2a4a6a",fontSize:"0.7rem"}}>◆</div>
-          <div style={{position:"absolute",top:8,right:10,color:"#2a4a6a",fontSize:"0.7rem"}}>◆</div>
-          <div className="cin" style={{color:"#2a4a6a",fontSize:"0.6rem",letterSpacing:"0.3em",marginBottom:4}}>{todayDay} {todayMonth}</div>
-          <div className="cin" style={{color:"#4a9fd4",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:2}}>AASHAPURA</div>
-          <div className="cin" style={{color:"#2a4a6a",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>OPEN: 07:15 PM &nbsp;◆&nbsp; CLOSE: 08:15 PM</div>
-          <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#4a9fd4,transparent)",margin:"0 auto 16px"}} />
-          <div className="cin" style={{fontSize:"clamp(1.4rem,5vw,2.2rem)",fontWeight:900,letterSpacing:"0.15em",color:"#4a9fd4",filter:"drop-shadow(0 0 10px rgba(74,159,212,0.4))"}}>
-            {aResult}
-          </div>
-          <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#4a9fd4,transparent)",margin:"16px auto"}} />
-          <button onClick={() => window.location.href="/aashapura-chart"} className="cin"
-            style={{background:"linear-gradient(135deg,#2a6a94,#4a9fd4)",color:"#fff",border:"none",padding:"10px 24px",fontSize:"0.65rem",letterSpacing:"0.2em",cursor:"pointer",borderRadius:2}}>
-            📊 CHART DEKHO
-          </button>
-        </div>
-      </div>
-
-      <div style={{maxWidth:500,margin:"0 auto 40px",padding:"0 16px"}}>
-        <div className="cor" style={{border:"1px solid #1a2a3a",padding:"14px 20px",textAlign:"center",fontSize:"0.9rem",color:"#2a4a6a",fontStyle:"italic",background:"#0a0a0a"}}>
-          ❝ Aashapura result roz 7:15 PM — 8:15 PM pe update hota hai ❞
-        </div>
-      </div>
-
-      <div style={{background:"linear-gradient(90deg,#8a6820,#f5e070,#c9a84c,#f5e070,#8a6820)",height:3,marginTop:20}} />
+      <div style={{background:"linear-gradient(90deg,#8a6820,#f5e070,#c9a84c,#f5e070,#8a6820)",height:3,marginTop:40}} />
       <footer style={{textAlign:"center",padding:"20px",background:"#0a0a0a"}}>
         <div className="cin" style={{color:"#2a2010",fontSize:"0.6rem",letterSpacing:"0.3em"}}>© 2026 DUBAI KING & AASHAPURA — ALL RIGHTS RESERVED</div>
       </footer>
