@@ -46,9 +46,9 @@ export default function App() {
       if (rData) { setResult1(rData.result1); setResult2(rData.result2 || "WAIT"); }
       const { data: aData } = await supabase.from("aashapura_results").select("*").eq("id", 1).single();
       if (aData) { setAOpen(aData.open_digits || "XXX"); setAClose(aData.close_digits || "XXX"); }
-      await loadChart();
     } catch(e) { console.error(e); }
     setLoading(false);
+    loadChart();
   }
 
   async function loadChart() {
@@ -172,7 +172,7 @@ export default function App() {
           <div className="cin" style={{color:"#c0392b",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:2}}>GOLUWALA</div>
           <div className="cin" style={{color:"#6a6040",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>07:30 PM</div>
           <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"0 auto 12px"}} />
-          <div className="cin gold-grad" style={{fontSize:"clamp(3rem,10vw,5rem)",fontWeight:900,lineHeight:1,filter:"drop-shadow(0 0 15px rgba(201,168,76,0.4))"}}>{loading ? "..." : result1}</div>
+          <div className="cin gold-grad" style={{fontSize:"clamp(3rem,10vw,5rem)",fontWeight:900,lineHeight:1,filter:"drop-shadow(0 0 15px rgba(201,168,76,0.4))"}}>{result1}</div>
           <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"12px auto 0"}} />
         </div>
         <div style={{background:"linear-gradient(145deg,#0d0b06,#111008)",border:"1px solid #2a2010",borderRadius:4,padding:"30px 16px",textAlign:"center",position:"relative"}}>
@@ -218,8 +218,10 @@ export default function App() {
         <div className="cin" style={{color:"#8a6820",fontSize:"0.55rem",letterSpacing:"0.5em",marginTop:4}}>2016 — 2026</div>
       </div>
 
-      {loading ? (
-        <div style={{textAlign:"center",padding:40}}><div className="cin" style={{color:"#c9a84c",fontSize:"0.85rem",letterSpacing:"0.3em"}}>LOADING...</div></div>
+      {Object.keys(chartData).length === 0 ? (
+        <div style={{textAlign:"center",padding:40}}>
+          <div className="cin" style={{color:"#8a6820",fontSize:"0.75rem",letterSpacing:"0.3em"}}>CHART LOADING...</div>
+        </div>
       ) : (
         <div style={{maxWidth:500,margin:"0 auto",padding:"24px 16px"}}>
           <div style={{border:"1px solid #2a2010",borderRadius:4,overflow:"hidden"}}>
