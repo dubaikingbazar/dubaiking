@@ -198,7 +198,7 @@ export default function App() {
           <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#4a9fd4,transparent)",margin:"12px auto"}} />
           <button onClick={() => window.location.href="/aashapura-chart"} className="cin"
             style={{background:"linear-gradient(135deg,#2a6a94,#4a9fd4)",color:"#fff",border:"none",padding:"10px 24px",fontSize:"0.65rem",letterSpacing:"0.2em",cursor:"pointer",borderRadius:2}}>
-            📊 CHART DEKHO
+            PANEL CHART
           </button>
         </div>
       </div>
