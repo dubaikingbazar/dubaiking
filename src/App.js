@@ -204,11 +204,7 @@ export default function App() {
       </div>
 
       {/* Notice */}
-      <div style={{maxWidth:700,margin:"16px auto",padding:"0 16px"}}>
-        <div className="cor" style={{border:"1px solid #1a1408",padding:"14px 20px",textAlign:"center",fontSize:"0.9rem",color:"#8a6820",fontStyle:"italic",background:"#0a0a0a"}}>
-          ❝ Har roz ka result 7:30 PM pe update hota hai — Dubai King Official Platform ❞
-        </div>
-      </div>
+      
 
       {/* Dubai King Chart */}
       <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",borderTop:"1px solid #2a2010",borderBottom:"1px solid #2a2010",padding:"16px",textAlign:"center"}}>
