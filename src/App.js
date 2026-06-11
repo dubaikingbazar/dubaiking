@@ -9,19 +9,16 @@ function getISTTime() {
 
 function calcJodi(open, close) {
   if (!open || open === "XXX") return "XX";
-  const openSum = open.split("").reduce((a, b) => a + parseInt(b), 0);
-  const openDigit = openSum % 10;
+  const openDigit = open.split("").reduce((a, b) => a + parseInt(b), 0) % 10;
   if (!close || close === "XXX") return openDigit + "X";
-  const closeSum = close.split("").reduce((a, b) => a + parseInt(b), 0);
-  const closeDigit = closeSum % 10;
+  const closeDigit = close.split("").reduce((a, b) => a + parseInt(b), 0) % 10;
   return `${openDigit}${closeDigit}`;
 }
 
 function formatResult(open, close) {
-  const jodi = calcJodi(open, close);
   const o = open || "XXX";
   const c = close || "XXX";
-  return `${o}-${jodi}-${c}`;
+  return `${o}-${calcJodi(o,c)}-${c}`;
 }
 
 export default function App() {
@@ -30,13 +27,10 @@ export default function App() {
   const [aOpen, setAOpen] = useState("XXX");
   const [aClose, setAClose] = useState("XXX");
   const [chartData, setChartData] = useState({});
-  const [aChartData, setAChartData] = useState({});
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(getISTTime());
   const [selMonth, setSelMonth] = useState(getISTTime().getMonth() + 1);
   const [selYear, setSelYear] = useState(getISTTime().getFullYear());
-  const [aSelMonth, setASelMonth] = useState(getISTTime().getMonth() + 1);
-  const [aSelYear, setASelYear] = useState(getISTTime().getFullYear());
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -50,12 +44,9 @@ export default function App() {
     try {
       const { data: rData } = await supabase.from("results").select("*").eq("id", 1).single();
       if (rData) { setResult1(rData.result1); setResult2(rData.result2 || "WAIT"); }
-      
       const { data: aData } = await supabase.from("aashapura_results").select("*").eq("id", 1).single();
       if (aData) { setAOpen(aData.open_digits || "XXX"); setAClose(aData.close_digits || "XXX"); }
-
       await loadChart();
-      await loadAChart();
     } catch(e) { console.error(e); }
     setLoading(false);
   }
@@ -73,19 +64,6 @@ export default function App() {
     setChartData(grouped);
   }
 
-  async function loadAChart() {
-    const { data } = await supabase.from("aashapura").select("*")
-      .order("year", { ascending: false }).order("month", { ascending: false }).order("day", { ascending: true });
-    if (!data) return;
-    const grouped = {};
-    data.forEach(row => {
-      const key = `${row.year}-${row.month}`;
-      if (!grouped[key]) grouped[key] = { year: row.year, month: row.month, days: {} };
-      grouped[key].days[row.day] = formatResult(row.open_digits, row.close_digits);
-    });
-    setAChartData(grouped);
-  }
-
   useEffect(() => {
     const channel = supabase.channel("all-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "results" }, (payload) => {
@@ -95,13 +73,9 @@ export default function App() {
         }
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "aashapura_results" }, (payload) => {
-        if (payload.new) {
-          setAOpen(payload.new.open_digits || "XXX");
-          setAClose(payload.new.close_digits || "XXX");
-        }
+        if (payload.new) { setAOpen(payload.new.open_digits || "XXX"); setAClose(payload.new.close_digits || "XXX"); }
       })
       .subscribe();
-
     const r = setInterval(async () => {
       try {
         const { data: d1 } = await supabase.from("results").select("*").eq("id", 1).single();
@@ -110,7 +84,6 @@ export default function App() {
         if (d2) { setAOpen(d2.open_digits || "XXX"); setAClose(d2.close_digits || "XXX"); }
       } catch(e) {}
     }, 3000);
-
     const t = setInterval(() => setNow(getISTTime()), 1000);
     return () => { supabase.removeChannel(channel); clearInterval(r); clearInterval(t); };
   }, []);
@@ -118,16 +91,12 @@ export default function App() {
   const ist = getISTTime();
   const dateStr = now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
-
   const todayDay = ist.getDate();
   const todayMonth = MONTHS[ist.getMonth()].substring(0,3).toUpperCase();
-  const yesterdayDate = new Date(ist);
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayDate = new Date(ist); yesterdayDate.setDate(yesterdayDate.getDate() - 1);
   const yesterdayDay = yesterdayDate.getDate();
   const yesterdayMonth = MONTHS[yesterdayDate.getMonth()].substring(0,3).toUpperCase();
-
   const selected = chartData[`${selYear}-${selMonth}`];
-  const aSelected = aChartData[`${aSelYear}-${aSelMonth}`];
 
   function prevMonth() {
     if (selMonth === 1) { if (selYear > 2016) { setSelMonth(12); setSelYear(y => y-1); } } else setSelMonth(m => m-1);
@@ -136,19 +105,8 @@ export default function App() {
     if (selYear === ist.getFullYear() && selMonth === ist.getMonth()+1) return;
     if (selMonth === 12) { setSelMonth(1); setSelYear(y => y+1); } else setSelMonth(m => m+1);
   }
-  function aPrevMonth() {
-    if (aSelMonth === 1) { if (aSelYear > 2016) { setASelMonth(12); setASelYear(y => y-1); } } else setASelMonth(m => m-1);
-  }
-  function aNextMonth() {
-    if (aSelYear === ist.getFullYear() && aSelMonth === ist.getMonth()+1) return;
-    if (aSelMonth === 12) { setASelMonth(1); setASelYear(y => y+1); } else setASelMonth(m => m+1);
-  }
-
   const isLatest = selYear === ist.getFullYear() && selMonth === ist.getMonth()+1;
   const isOldest = selYear === 2016 && selMonth === 1;
-  const aIsLatest = aSelYear === ist.getFullYear() && aSelMonth === ist.getMonth()+1;
-  const aIsOldest = aSelYear === 2016 && aSelMonth === 1;
-
   const years = [];
   for (let y = 2026; y >= 2016; y--) years.push(y);
   const isWait = result2 === "WAIT" || result2 === "--" || !result2;
@@ -181,7 +139,7 @@ export default function App() {
         <div className="cin" style={{color:"#8a6820",fontSize:"0.6rem",letterSpacing:"0.3em"}}>◆ OFFICIAL PLATFORM ◆</div>
       </nav>
 
-      {/* ── DUBAI KING ── */}
+      {/* DUBAI KING HEADER */}
       <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",padding:"50px 16px 40px",textAlign:"center",borderBottom:"1px solid #1a1408"}}>
         <div className="cin" style={{color:"#8a6820",fontSize:"0.65rem",letterSpacing:"0.5em",marginBottom:12}}>◆ ◆ ◆</div>
         <div className="cin gold-grad" style={{fontSize:"clamp(1.6rem,5vw,3rem)",fontWeight:900,letterSpacing:"0.1em",lineHeight:1.2,filter:"drop-shadow(0 0 20px rgba(201,168,76,0.3))"}}>DUBAI KING</div>
@@ -194,7 +152,7 @@ export default function App() {
         <span className="cin" style={{color:"#c9a84c",fontSize:"0.75rem",letterSpacing:"0.15em"}}>{dateStr} &nbsp;◆&nbsp; {timeStr} (IST)</span>
       </div>
 
-      {/* Dubai King Cards */}
+      {/* Dubai King 2 Cards */}
       <div style={{maxWidth:700,margin:"40px auto",padding:"0 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
         <div style={{background:"linear-gradient(145deg,#0d0b06,#111008)",border:"1px solid #2a2010",borderRadius:4,padding:"30px 16px",textAlign:"center",position:"relative"}}>
           <div style={{position:"absolute",top:8,left:10,color:"#8a6820",fontSize:"0.7rem"}}>◆</div>
@@ -225,7 +183,7 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{maxWidth:700,margin:"0 auto 32px",padding:"0 16px"}}>
+      <div style={{maxWidth:700,margin:"0 auto 16px",padding:"0 16px"}}>
         <div className="cor" style={{border:"1px solid #1a1408",padding:"14px 20px",textAlign:"center",fontSize:"0.9rem",color:"#8a6820",fontStyle:"italic",background:"#0a0a0a"}}>
           ❝ Har roz ka result 7:30 PM pe update hota hai — Dubai King Official Platform ❞
         </div>
@@ -248,8 +206,8 @@ export default function App() {
               <div className="cin gold-grad" style={{fontSize:"1.1rem",fontWeight:700,letterSpacing:"0.2em"}}>{MONTHS[selMonth-1].toUpperCase()} {selYear}</div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",background:"#0d0b06",borderBottom:"1px solid #2a2010"}}>
-              <div className="cin" style={{color:"#c0392b",padding:"10px",textAlign:"center",fontSize:"0.65rem",letterSpacing:"0.2em",borderRight:"1px solid #2a2010"}}>DATE</div>
-              <div className="cin" style={{color:"#c9a84c",padding:"10px",textAlign:"center",fontSize:"0.65rem",letterSpacing:"0.2em"}}>DUBAI KING</div>
+              <div className="cin" style={{color:"#c0392b",padding:"10px",textAlign:"center",fontSize:"0.65rem",borderRight:"1px solid #2a2010"}}>DATE</div>
+              <div className="cin" style={{color:"#c9a84c",padding:"10px",textAlign:"center",fontSize:"0.65rem"}}>DUBAI KING</div>
             </div>
             {Array.from({length: new Date(selYear, selMonth, 0).getDate()}, (_, i) => i+1).map(day => (
               <div key={day} style={{display:"grid",gridTemplateColumns:"1fr 1fr",background:day%2===0?"#0a0a0a":"#070707",borderBottom:"1px solid #111008"}}>
@@ -276,7 +234,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ── AASHAPURA ── */}
+      {/* AASHAPURA SECTION */}
       <div style={{background:"linear-gradient(180deg,#06090d,#070707)",padding:"50px 16px 40px",textAlign:"center",borderTop:"2px solid #1a2a3a",borderBottom:"1px solid #1a2a3a",marginTop:40}}>
         <div className="cin" style={{color:"#4a7a9b",fontSize:"0.65rem",letterSpacing:"0.5em",marginBottom:12}}>◆ ◆ ◆</div>
         <div className="cin" style={{fontSize:"clamp(1.6rem,5vw,3rem)",fontWeight:900,letterSpacing:"0.1em",lineHeight:1.2,background:"linear-gradient(180deg,#a8d8f0,#4a9fd4,#2a6a94)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",filter:"drop-shadow(0 0 20px rgba(74,159,212,0.3))"}}>AASHAPURA</div>
@@ -292,65 +250,26 @@ export default function App() {
           <div style={{position:"absolute",top:8,right:10,color:"#2a4a6a",fontSize:"0.7rem"}}>◆</div>
           <div className="cin" style={{color:"#2a4a6a",fontSize:"0.6rem",letterSpacing:"0.3em",marginBottom:4}}>{todayDay} {todayMonth}</div>
           <div className="cin" style={{color:"#4a9fd4",fontSize:"1rem",fontWeight:900,letterSpacing:"0.2em",marginBottom:2}}>AASHAPURA</div>
-          <div className="cin" style={{color:"#2a4a6a",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>OPEN: 07:15 AM &nbsp;◆&nbsp; CLOSE: 08:15 AM</div>
+          <div className="cin" style={{color:"#2a4a6a",fontSize:"0.55rem",letterSpacing:"0.2em",marginBottom:10}}>OPEN: 07:15 PM &nbsp;◆&nbsp; CLOSE: 08:15 PM</div>
           <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#4a9fd4,transparent)",margin:"0 auto 16px"}} />
           <div className="cin" style={{fontSize:"clamp(1.4rem,5vw,2.2rem)",fontWeight:900,letterSpacing:"0.15em",color:"#4a9fd4",filter:"drop-shadow(0 0 10px rgba(74,159,212,0.4))"}}>
             {aResult}
           </div>
-          <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#4a9fd4,transparent)",margin:"16px auto 0"}} />
+          <div style={{width:60,height:1,background:"linear-gradient(90deg,transparent,#4a9fd4,transparent)",margin:"16px auto"}} />
+          <button onClick={() => window.location.href="/aashapura-chart"} className="cin"
+            style={{background:"linear-gradient(135deg,#2a6a94,#4a9fd4)",color:"#fff",border:"none",padding:"10px 24px",fontSize:"0.65rem",letterSpacing:"0.2em",cursor:"pointer",borderRadius:2}}>
+            📊 CHART DEKHO
+          </button>
         </div>
       </div>
 
-      <div style={{maxWidth:500,margin:"0 auto 32px",padding:"0 16px"}}>
+      <div style={{maxWidth:500,margin:"0 auto 40px",padding:"0 16px"}}>
         <div className="cor" style={{border:"1px solid #1a2a3a",padding:"14px 20px",textAlign:"center",fontSize:"0.9rem",color:"#2a4a6a",fontStyle:"italic",background:"#0a0a0a"}}>
-          ❝ Aashapura result roz subah update hota hai ❞
+          ❝ Aashapura result roz 7:15 PM — 8:15 PM pe update hota hai ❞
         </div>
       </div>
 
-      {/* Aashapura Chart */}
-      <div style={{background:"linear-gradient(180deg,#06090d,#070707)",borderTop:"1px solid #1a2a3a",borderBottom:"1px solid #1a2a3a",padding:"16px",textAlign:"center"}}>
-        <div className="cin" style={{fontSize:"1rem",fontWeight:700,letterSpacing:"0.3em",background:"linear-gradient(180deg,#a8d8f0,#4a9fd4,#2a6a94)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>AASHAPURA MONTHLY CHART</div>
-        <div className="cin" style={{color:"#2a4a6a",fontSize:"0.55rem",letterSpacing:"0.5em",marginTop:4}}>2016 — 2026</div>
-      </div>
-
-      <div style={{maxWidth:500,margin:"0 auto",padding:"24px 16px"}}>
-        <div style={{border:"1px solid #1a2a3a",borderRadius:4,overflow:"hidden"}}>
-          <div style={{background:"linear-gradient(135deg,#060810,#0a0d16,#060810)",borderBottom:"1px solid #1a2a3a",padding:"14px",textAlign:"center",position:"relative"}}>
-            <div style={{position:"absolute",top:"50%",left:14,transform:"translateY(-50%)",color:"#2a4a6a",fontSize:"0.7rem"}}>◆</div>
-            <div style={{position:"absolute",top:"50%",right:14,transform:"translateY(-50%)",color:"#2a4a6a",fontSize:"0.7rem"}}>◆</div>
-            <div className="cin" style={{fontSize:"1.1rem",fontWeight:700,letterSpacing:"0.2em",background:"linear-gradient(180deg,#a8d8f0,#4a9fd4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{MONTHS[aSelMonth-1].toUpperCase()} {aSelYear}</div>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",background:"#0a0d12",borderBottom:"1px solid #1a2a3a"}}>
-            <div className="cin" style={{color:"#c0392b",padding:"10px",textAlign:"center",fontSize:"0.65rem",letterSpacing:"0.2em",borderRight:"1px solid #1a2a3a"}}>DATE</div>
-            <div className="cin" style={{color:"#4a9fd4",padding:"10px",textAlign:"center",fontSize:"0.65rem",letterSpacing:"0.2em"}}>AASHAPURA</div>
-          </div>
-          {Array.from({length: new Date(aSelYear, aSelMonth, 0).getDate()}, (_, i) => i+1).map(day => (
-            <div key={day} style={{display:"grid",gridTemplateColumns:"1fr 2fr",background:day%2===0?"#0a0a0a":"#070707",borderBottom:"1px solid #0d1015"}}>
-              <div className="cin" style={{color:"#c0392b",padding:"10px",textAlign:"center",fontSize:"0.85rem",fontWeight:700,borderRight:"1px solid #0d1015"}}>{String(day).padStart(2,"0")}</div>
-              <div className="cin" style={{color:aSelected?.days[day] && aSelected.days[day]!=="XXX-XX-XXX"?"#4a9fd4":"#1a2a3a",padding:"10px",textAlign:"center",fontSize:"0.85rem",fontWeight:700,letterSpacing:"0.05em"}}>{aSelected?.days[day] || "XXX-XX-XXX"}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{display:"flex",justifyContent:"space-between",gap:8,marginTop:16}}>
-          <button disabled={aIsOldest} onClick={aPrevMonth} className="cin" style={{flex:1,background:aIsOldest?"#0a0a0a":"linear-gradient(135deg,#060810,#0a0d16)",color:aIsOldest?"#1a2a3a":"#4a9fd4",border:"1px solid",borderColor:aIsOldest?"#0d0d0d":"#1a2a3a",padding:"12px",fontSize:"0.65rem",cursor:aIsOldest?"not-allowed":"pointer",borderRadius:2}}>
-            ◀ {aSelMonth===1?`DEC ${aSelYear-1}`:`${MONTHS[aSelMonth-2].substring(0,3).toUpperCase()} ${aSelYear}`}
-          </button>
-          <button disabled={aIsLatest} onClick={aNextMonth} className="cin" style={{flex:1,background:aIsLatest?"#0a0a0a":"linear-gradient(135deg,#060810,#0a0d16)",color:aIsLatest?"#1a2a3a":"#4a9fd4",border:"1px solid",borderColor:aIsLatest?"#0d0d0d":"#1a2a3a",padding:"12px",fontSize:"0.65rem",cursor:aIsLatest?"not-allowed":"pointer",borderRadius:2}}>
-            {aSelMonth===12?`JAN ${aSelYear+1}`:`${MONTHS[aSelMonth].substring(0,3).toUpperCase()} ${aSelYear}`} ▶
-          </button>
-        </div>
-
-        <div style={{marginTop:16,background:"linear-gradient(135deg,#060810,#0a0d12)",border:"1px solid #1a2a3a",borderRadius:4,padding:"16px",textAlign:"center"}}>
-          <div className="cin" style={{color:"#2a4a6a",fontSize:"0.6rem",letterSpacing:"0.3em",marginBottom:12}}>◆ SELECT MONTH & YEAR ◆</div>
-          <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
-            <select value={aSelMonth} onChange={e => setASelMonth(Number(e.target.value))} style={{background:"#0a0d12",color:"#4a9fd4",borderColor:"#1a2a3a"}}>{MONTHS.map((m,i) => <option key={i} value={i+1}>{m.toUpperCase()}</option>)}</select>
-            <select value={aSelYear} onChange={e => setASelYear(Number(e.target.value))} style={{background:"#0a0d12",color:"#4a9fd4",borderColor:"#1a2a3a"}}>{years.map(y => <option key={y} value={y}>{y}</option>)}</select>
-          </div>
-        </div>
-      </div>
-
-      <div style={{background:"linear-gradient(90deg,#8a6820,#f5e070,#c9a84c,#f5e070,#8a6820)",height:3,marginTop:40}} />
+      <div style={{background:"linear-gradient(90deg,#8a6820,#f5e070,#c9a84c,#f5e070,#8a6820)",height:3,marginTop:20}} />
       <footer style={{textAlign:"center",padding:"20px",background:"#0a0a0a"}}>
         <div className="cin" style={{color:"#2a2010",fontSize:"0.6rem",letterSpacing:"0.3em"}}>© 2026 DUBAI KING & AASHAPURA — ALL RIGHTS RESERVED</div>
       </footer>
