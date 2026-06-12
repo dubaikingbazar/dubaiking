@@ -27,7 +27,6 @@ export default function Admin() {
   const [loginPass, setLoginPass] = useState("");
   const [loginErr, setLoginErr] = useState("");
 
-  // GOLUWALA
   const [result1, setResult1] = useState("--");
   const [result2, setResult2] = useState("WAIT");
   const [adminR1, setAdminR1] = useState("");
@@ -35,7 +34,6 @@ export default function Admin() {
   const [saved1, setSaved1] = useState(false);
   const [saved2, setSaved2] = useState(false);
 
-  // Aashapura
   const [aOpen, setAOpen] = useState("XXX");
   const [aClose, setAClose] = useState("XXX");
   const [adminAOpen, setAdminAOpen] = useState("");
@@ -54,14 +52,14 @@ export default function Admin() {
     loadData();
   }, [loggedIn]);
 
-  // Auto reset at 12 AM
+  // Auto reset at 12 AM IST
   useEffect(() => {
     if (!loggedIn) return;
     const t = setInterval(async () => {
       const ist = getISTTime();
       const h = ist.getHours();
       const m = ist.getMinutes();
-      if (h === 0 && m === 0 && !resetDone.current) {
+      if (h === 0 && m < 2 && !resetDone.current) {
         resetDone.current = true;
         await autoResetAll();
       } else if (h !== 0) {
@@ -73,25 +71,38 @@ export default function Admin() {
 
   async function autoResetAll() {
     try {
-      // GOLUWALA reset
       const { data: rData } = await supabase.from("results").select("*").eq("id", 1).single();
-      if (rData && rData.result2 && rData.result2 !== "WAIT") {
-        await supabase.from("results").upsert({ 
-          id: 1, 
-          result1: rData.result2, 
+      if (rData) {
+        const newResult1 = rData.result2 && rData.result2 !== "WAIT" ? rData.result2 : rData.result1;
+        await supabase.from("results").upsert({
+          id: 1,
+          result1: newResult1,
           result2: "WAIT",
-          updated_at: new Date().toISOString() 
+          updated_at: new Date().toISOString()
         });
-        setResult1(rData.result2);
+        setResult1(newResult1);
         setResult2("WAIT");
       }
 
       // Aashapura reset
-      await supabase.from("aashapura_results").upsert({ 
-        id: 1, 
-        open_digits: "XXX", 
+      const { data: aData } = await supabase.from("aashapura_results").select("*").eq("id", 1).single();
+      if (aData && aData.close_digits && aData.close_digits !== "XXX") {
+        const ist = getISTTime();
+        const yesterday = new Date(ist);
+        yesterday.setDate(yesterday.getDate() - 1);
+        await supabase.from("aashapura").upsert({
+          year: yesterday.getFullYear(),
+          month: yesterday.getMonth() + 1,
+          day: yesterday.getDate(),
+          open_digits: aData.open_digits,
+          close_digits: aData.close_digits
+        }, { onConflict: "year,month,day" });
+      }
+      await supabase.from("aashapura_results").upsert({
+        id: 1,
+        open_digits: "XXX",
         close_digits: "XXX",
-        updated_at: new Date().toISOString() 
+        updated_at: new Date().toISOString()
       });
       setAOpen("XXX");
       setAClose("XXX");
@@ -114,13 +125,8 @@ export default function Admin() {
     const val = adminR1.trim();
     if (!val) return;
     const ist = getISTTime();
-    const day = ist.getDate();
-    const month = ist.getMonth() + 1;
-    const year = ist.getFullYear();
-    // Save to results table
     await supabase.from("results").upsert({ id: 1, result1: val, updated_at: new Date().toISOString() });
-    // Save to chart
-    await supabase.from("chart").upsert({ year, month, day, result1: val }, { onConflict: "year,month,day" });
+    await supabase.from("chart").upsert({ year: ist.getFullYear(), month: ist.getMonth()+1, day: ist.getDate()-1, result1: val }, { onConflict: "year,month,day" });
     setResult1(val); setSaved1(true); setTimeout(() => setSaved1(false), 2500); setAdminR1("");
   }
 
@@ -128,13 +134,8 @@ export default function Admin() {
     const val = adminR2.trim();
     if (!val) return;
     const ist = getISTTime();
-    const day = ist.getDate();
-    const month = ist.getMonth() + 1;
-    const year = ist.getFullYear();
-    // Save to results table
     await supabase.from("results").upsert({ id: 1, result2: val, updated_at: new Date().toISOString() });
-    // Save to chart
-    await supabase.from("chart").upsert({ year, month, day, result1: val }, { onConflict: "year,month,day" });
+    await supabase.from("chart").upsert({ year: ist.getFullYear(), month: ist.getMonth()+1, day: ist.getDate(), result1: val }, { onConflict: "year,month,day" });
     setResult2(val); setSaved2(true); setTimeout(() => setSaved2(false), 2500); setAdminR2("");
   }
 
@@ -149,14 +150,12 @@ export default function Admin() {
     const val = adminAClose.trim();
     if (!val || val.length !== 3) return;
     const ist = getISTTime();
-    const day = ist.getDate();
-    const month = ist.getMonth() + 1;
-    const year = ist.getFullYear();
-    // Save to aashapura_results
     await supabase.from("aashapura_results").upsert({ id: 1, close_digits: val, updated_at: new Date().toISOString() });
-    // Save to aashapura chart
-    const currentOpen = aOpen !== "XXX" ? aOpen : adminAOpen;
-    await supabase.from("aashapura").upsert({ year, month, day, open_digits: currentOpen, close_digits: val }, { onConflict: "year,month,day" });
+    await supabase.from("aashapura").upsert({
+      year: ist.getFullYear(), month: ist.getMonth()+1, day: ist.getDate(),
+      open_digits: aOpen !== "XXX" ? aOpen : val,
+      close_digits: val
+    }, { onConflict: "year,month,day" });
     setAClose(val); setSavedAClose(true); setTimeout(() => setSavedAClose(false), 2500); setAdminAClose("");
   }
 
@@ -212,13 +211,12 @@ export default function Admin() {
 
       {autoReset && (
         <div style={{background:"#1a3a1a",border:"1px solid #4caf50",margin:16,padding:12,borderRadius:4,textAlign:"center",color:"#4caf50",fontSize:"0.8rem"}}>
-          ✓ 12 AM — Date change ho gayi! Dono games reset ho gaye!
+          ✓ 12 AM — Auto reset ho gaya! Dono games reset ho gaye!
         </div>
       )}
 
       <div style={{maxWidth:800,margin:"0 auto",padding:"24px 16px"}}>
 
-        {/* GOLUWALA */}
         <div className="cin" style={{color:"#c9a84c",fontSize:"0.7rem",letterSpacing:"0.3em",marginBottom:12,borderBottom:"1px solid #2a2010",paddingBottom:8}}>◆ GOLUWALA</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:28}}>
           <div style={{background:"#0d0d0d",border:"1px solid #8a6820",borderRadius:4,padding:20}}>
@@ -229,7 +227,7 @@ export default function Admin() {
               onKeyDown={e => e.key==="Enter" && saveResult1()} style={{marginBottom:10}} />
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <button className="btn-gold" onClick={saveResult1}>💾 SAVE</button>
-              {saved1 && <span style={{color:"#4caf50",fontSize:"0.75rem"}}>✓ Chart mein save!</span>}
+              {saved1 && <span style={{color:"#4caf50",fontSize:"0.75rem"}}>✓ Save!</span>}
             </div>
           </div>
           <div style={{background:"#0d0d0d",border:"1px solid #8a6820",borderRadius:4,padding:20}}>
@@ -240,20 +238,17 @@ export default function Admin() {
               onKeyDown={e => e.key==="Enter" && saveResult2()} style={{marginBottom:10}} />
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <button className="btn-gold" onClick={saveResult2}>💾 SAVE</button>
-              {saved2 && <span style={{color:"#4caf50",fontSize:"0.75rem"}}>✓ Chart mein save!</span>}
+              {saved2 && <span style={{color:"#4caf50",fontSize:"0.75rem"}}>✓ Save!</span>}
             </div>
           </div>
         </div>
 
-        {/* Aashapura */}
         <div className="cin" style={{color:"#4a9fd4",fontSize:"0.7rem",letterSpacing:"0.3em",marginBottom:12,borderBottom:"1px solid #1a2a3a",paddingBottom:8}}>◆ AASHAPURA</div>
-
         <div style={{marginBottom:12,background:"#0a0d12",border:"1px solid #1a2a3a",borderRadius:4,padding:12,textAlign:"center"}}>
           <div className="cin" style={{color:"#4a9fd4",fontSize:"1.1rem",letterSpacing:"0.1em"}}>
             {formatResult(aOpen, aClose)}
           </div>
         </div>
-
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           <div style={{background:"#0a0d12",border:"1px solid #1a2a3a",borderRadius:4,padding:20}}>
             <div className="cin" style={{color:"#4a9fd4",fontSize:"0.75rem",fontWeight:700,marginBottom:4}}>OPEN (3 Digits)</div>
@@ -274,11 +269,10 @@ export default function Admin() {
               onKeyDown={e => e.key==="Enter" && saveAClose()} style={{marginBottom:10}} />
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <button className="btn-blue" onClick={saveAClose}>💾 SAVE CLOSE</button>
-              {savedAClose && <span style={{color:"#4caf50",fontSize:"0.75rem"}}>✓ Chart mein save!</span>}
+              {savedAClose && <span style={{color:"#4caf50",fontSize:"0.75rem"}}>✓ Save!</span>}
             </div>
           </div>
         </div>
-
       </div>
 
       <div style={{background:"linear-gradient(90deg,#8a6820,#f5e070,#c9a84c,#f5e070,#8a6820)",height:3,marginTop:40}} />
