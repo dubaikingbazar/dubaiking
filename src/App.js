@@ -135,6 +135,7 @@ export default function App() {
         .gold-grad{background:linear-gradient(180deg,#f5e070,#c9a84c,#8a6820);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
         .pulse{animation:pulse 1.4s infinite}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+        @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
         ::-webkit-scrollbar{width:5px}
         ::-webkit-scrollbar-track{background:#111}
         ::-webkit-scrollbar-thumb{background:#8a6820}
@@ -142,6 +143,18 @@ export default function App() {
       `}</style>
 
       <div style={{background:"linear-gradient(90deg,#8a6820,#f5e070,#c9a84c,#f5e070,#8a6820)",height:3}} />
+
+      {/* Disclaimer Ticker */}
+      <div style={{background:"#c0392b",padding:"8px 0",overflow:"hidden",whiteSpace:"nowrap"}}>
+        <div style={{display:"inline-block",animation:"ticker 40s linear infinite"}}>
+          <span className="cin" style={{color:"#fff",fontSize:"0.65rem",letterSpacing:"0.08em",paddingRight:80}}>
+            ⚠ WE ARE SHOW ONLY NEWS AND PROVIDE ENTERTAINMENT. VIEWING THIS WEBSITE IS ON YOUR OWN RISK. ALL THE INFORMATION SHOWN ON WEBSITE IS SPONSORED AND WE WARN YOU THAT SATTA IN YOUR COUNTRY MAY BE BANNED OR ILLEGAL. WE ARE NOT RESPONSIBLE FOR ANY ISSUES OR SCAM. WE RESPECT ALL COUNTRY RULES / LAWS. IF YOU NOT AGREE/SATISFIED WITH OUR SITE DISCLAIMER PLEASE QUIT OUR SITE RIGHT NOW AND NEVER VISIT THIS SITE AGAIN. THANKYOU &nbsp;&nbsp;&nbsp;
+          </span>
+          <span className="cin" style={{color:"#fff",fontSize:"0.65rem",letterSpacing:"0.08em",paddingRight:80}}>
+            ⚠ WE ARE SHOW ONLY NEWS AND PROVIDE ENTERTAINMENT. VIEWING THIS WEBSITE IS ON YOUR OWN RISK. ALL THE INFORMATION SHOWN ON WEBSITE IS SPONSORED AND WE WARN YOU THAT SATTA IN YOUR COUNTRY MAY BE BANNED OR ILLEGAL. WE ARE NOT RESPONSIBLE FOR ANY ISSUES OR SCAM. WE RESPECT ALL COUNTRY RULES / LAWS. IF YOU NOT AGREE/SATISFIED WITH OUR SITE DISCLAIMER PLEASE QUIT OUR SITE RIGHT NOW AND NEVER VISIT THIS SITE AGAIN. THANKYOU &nbsp;&nbsp;&nbsp;
+          </span>
+        </div>
+      </div>
 
       <nav style={{background:"#0a0a0a",borderBottom:"1px solid #2a2010",padding:"16px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
         <div style={{display:"flex",gap:4}}>
@@ -155,7 +168,7 @@ export default function App() {
       <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",padding:"50px 16px 40px",textAlign:"center",borderBottom:"1px solid #1a1408"}}>
         <div className="cin" style={{color:"#8a6820",fontSize:"0.65rem",letterSpacing:"0.5em",marginBottom:12}}>◆ ◆ ◆</div>
         <div className="cin gold-grad" style={{fontSize:"clamp(1.6rem,5vw,3rem)",fontWeight:900,letterSpacing:"0.1em",lineHeight:1.2,filter:"drop-shadow(0 0 20px rgba(201,168,76,0.3))"}}>GOLUWALA</div>
-        <div className="cin gold-grad" style={{fontSize:"clamp(1rem,3vw,1.6rem)",fontWeight:400,letterSpacing:"0.2em",marginTop:4}}> GAME RESULT & CHART 2026</div>
+        <div className="cin gold-grad" style={{fontSize:"clamp(1rem,3vw,1.6rem)",fontWeight:400,letterSpacing:"0.2em",marginTop:4}}>GAME RESULT AND CHART 2026</div>
         <div style={{width:200,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"16px auto"}} />
         <div className="cor" style={{color:"#8a6820",fontSize:"0.85rem",letterSpacing:"0.2em",fontStyle:"italic"}}>Premium Result Platform</div>
       </div>
