@@ -155,7 +155,7 @@ export default function App() {
       <div style={{background:"linear-gradient(180deg,#0d0b06,#070707)",padding:"50px 16px 40px",textAlign:"center",borderBottom:"1px solid #1a1408"}}>
         <div className="cin" style={{color:"#8a6820",fontSize:"0.65rem",letterSpacing:"0.5em",marginBottom:12}}>◆ ◆ ◆</div>
         <div className="cin gold-grad" style={{fontSize:"clamp(1.6rem,5vw,3rem)",fontWeight:900,letterSpacing:"0.1em",lineHeight:1.2,filter:"drop-shadow(0 0 20px rgba(201,168,76,0.3))"}}>GOLUWALA</div>
-        <div className="cin gold-grad" style={{fontSize:"clamp(1rem,3vw,1.6rem)",fontWeight:400,letterSpacing:"0.2em",marginTop:4}}>RESULT & CHART 2026</div>
+        <div className="cin gold-grad" style={{fontSize:"clamp(1rem,3vw,1.6rem)",fontWeight:400,letterSpacing:"0.2em",marginTop:4}}> GAME RESULT & CHART 2026</div>
         <div style={{width:200,height:1,background:"linear-gradient(90deg,transparent,#c9a84c,transparent)",margin:"16px auto"}} />
         <div className="cor" style={{color:"#8a6820",fontSize:"0.85rem",letterSpacing:"0.2em",fontStyle:"italic"}}>Premium Result Platform</div>
       </div>
