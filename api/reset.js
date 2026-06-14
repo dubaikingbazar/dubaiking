@@ -7,9 +7,8 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
   try {
-    // Get current results
+    // Goluwala reset - shift result2 to result1
     const { data: rData } = await supabase.from('results').select('*').eq('id', 1).single();
-    
     if (rData) {
       const newResult1 = rData.result2 && rData.result2 !== 'WAIT' ? rData.result2 : rData.result1;
       await supabase.from('results').upsert({
@@ -20,21 +19,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Get aashapura results
-    const { data: aData } = await supabase.from('aashapura_results').select('*').eq('id', 1).single();
-    
-    if (aData && aData.close_digits && aData.close_digits !== 'XXX') {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      await supabase.from('aashapura').upsert({
-        year: yesterday.getFullYear(),
-        month: yesterday.getMonth() + 1,
-        day: yesterday.getDate(),
-        open_digits: aData.open_digits,
-        close_digits: aData.close_digits
-      }, { onConflict: 'year,month,day' });
-    }
-
+    // Aashapura reset - just clear current display, chart already saved by admin
     await supabase.from('aashapura_results').upsert({
       id: 1,
       open_digits: 'XXX',
