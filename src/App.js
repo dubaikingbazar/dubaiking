@@ -42,13 +42,53 @@ export default function App() {
   async function loadData() {
     setLoading(true);
     try {
+      const ist = getISTTime();
+      const today = `${ist.getFullYear()}-${ist.getMonth()+1}-${ist.getDate()}`;
+
       const { data: rData } = await supabase.from("results").select("*").eq("id", 1).single();
-      if (rData) { setResult1(rData.result1); setResult2(rData.result2 || "WAIT"); }
+      if (rData) {
+        let lastDay = null;
+        if (rData.updated_at) {
+          const lastIST = getISTFromUTC(rData.updated_at);
+          lastDay = `${lastIST.getFullYear()}-${lastIST.getMonth()+1}-${lastIST.getDate()}`;
+        }
+
+        if (lastDay && lastDay !== today && rData.result2 && rData.result2 !== "WAIT") {
+          const newResult1 = rData.result2;
+          await supabase.from("results").upsert({ id: 1, result1: newResult1, result2: "WAIT", updated_at: new Date().toISOString() });
+          setResult1(newResult1);
+          setResult2("WAIT");
+        } else {
+          setResult1(rData.result1);
+          setResult2(rData.result2 || "WAIT");
+        }
+      }
+
       const { data: aData } = await supabase.from("aashapura_results").select("*").eq("id", 1).single();
-      if (aData) { setAOpen(aData.open_digits || "XXX"); setAClose(aData.close_digits || "XXX"); }
+      if (aData) {
+        let aLastDay = null;
+        if (aData.updated_at) {
+          const aLastIST = getISTFromUTC(aData.updated_at);
+          aLastDay = `${aLastIST.getFullYear()}-${aLastIST.getMonth()+1}-${aLastIST.getDate()}`;
+        }
+
+        if (aLastDay && aLastDay !== today && aData.close_digits && aData.close_digits !== "XXX") {
+          await supabase.from("aashapura_results").upsert({ id: 1, open_digits: "XXX", close_digits: "XXX", updated_at: new Date().toISOString() });
+          setAOpen("XXX");
+          setAClose("XXX");
+        } else {
+          setAOpen(aData.open_digits || "XXX");
+          setAClose(aData.close_digits || "XXX");
+        }
+      }
     } catch(e) { console.error(e); }
     setLoading(false);
     loadChart();
+  }
+
+  function getISTFromUTC(utcString) {
+    const d = new Date(utcString);
+    return new Date(d.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
   }
 
   async function loadChart() {
@@ -144,7 +184,6 @@ export default function App() {
 
       <div style={{background:"linear-gradient(90deg,#8a6820,#f5e070,#c9a84c,#f5e070,#8a6820)",height:3}} />
 
-      {/* Disclaimer Ticker */}
       <div style={{background:"#c0392b",padding:"8px 0",overflow:"hidden",whiteSpace:"nowrap"}}>
         <div style={{display:"inline-block",animation:"ticker 40s linear infinite"}}>
           <span className="cin" style={{color:"#fff",fontSize:"0.65rem",letterSpacing:"0.08em",paddingRight:80}}>
