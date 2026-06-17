@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+return <div style={{background:"#000",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center"}}>
+  <h1 style={{color:"#c9a84c",fontFamily:"serif"}}>Coming Soon</h1>
+</div>;
 import { supabase } from "./supabase";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
